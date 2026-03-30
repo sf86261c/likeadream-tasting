@@ -1,1091 +1,612 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <base target="_top">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-  <style>
-    /* ===== Yorimichi Patisserie 風格 ===== */
-    :root {
-      --bg-primary: #e8e1d0;       /* 暖米色 */
-      --bg-secondary: #f2ede6;     /* 淺奶白 */
-      --bg-card: rgba(242,237,230,0.85);
-      --accent: #9f6e37;           /* 金棕色 (logo色) */
-      --accent-dark: #7a5528;
-      --text-primary: #3a2104;     /* 深咖啡棕 */
-      --text-secondary: #6b5440;
-      --text-light: #9a8a78;
-      --border: #d4c9b8;
-      --border-light: #e0d8cc;
-    }
-    body {
-      font-family: 'Noto Sans TC', Arial, Helvetica, sans-serif;
-      padding: 24px;
-      min-height: 100vh;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      letter-spacing: 0.5px;
-    }
-    h1 {
-      font-family: 'Cormorant Garamond', serif;
-      color: var(--accent);
-      font-weight: 400;
-      font-size: 28px;
-      letter-spacing: 3px;
-    }
-    h2 {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-      color: var(--text-primary);
-      font-size: 18px;
-      font-weight: 500;
-      letter-spacing: 1px;
-    }
-    h3 { color: var(--text-primary); font-weight: 500; }
-    .section {
-      background: var(--bg-card);
-      padding: 24px;
-      margin-bottom: 20px;
-      border-radius: 2px;
-      border: 1px solid var(--border-light);
-      box-shadow: none;
-    }
-    .flex-row { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
-    label { font-weight: 500; color: var(--text-secondary); width: auto; font-size: 14px; }
-    /* 輸入框 */
-    input[type="date"], input[type="number"], input[type="text"], select {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 0;
-      background: rgba(255,255,255,0.6);
-      color: var(--text-primary);
-      font-family: 'Noto Sans TC', Arial, sans-serif;
-      font-size: 14px;
-      transition: border-color 0.3s;
-    }
-    input[type="date"]:focus, input[type="number"]:focus, input[type="text"]:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    /* 按鈕 — 順道風格：細邊框、無填充、優雅 */
-    button {
-      padding: 10px 24px;
-      color: var(--text-primary);
-      background: transparent;
-      border: 1px solid var(--text-primary);
-      border-radius: 0;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      font-family: 'Noto Sans TC', Arial, sans-serif;
-      margin-top: 10px;
-      transition: all 0.3s ease;
-      letter-spacing: 1px;
-    }
-    button:hover {
-      background: var(--text-primary);
-      color: var(--bg-secondary);
-    }
-    .btn-green { border-color: #6b8f5e; color: #6b8f5e; }
-    .btn-green:hover { background: #6b8f5e; color: #fff; }
-    .btn-blue { border-color: var(--accent); color: var(--accent); }
-    .btn-blue:hover { background: var(--accent); color: #fff; }
-    .btn-orange { border-color: #b8860b; color: #b8860b; }
-    .btn-orange:hover { background: #b8860b; color: #fff; }
-    .btn-red { border-color: #a0522d; color: #a0522d; }
-    .btn-red:hover { background: #a0522d; color: #fff; }
-    .btn-purple { border-color: #7b6b8a; color: #7b6b8a; }
-    .btn-purple:hover { background: #7b6b8a; color: #fff; }
-    button:disabled { border-color: var(--border) !important; color: var(--text-light) !important; background: transparent !important; cursor: not-allowed; }
-    /* 表格 */
-    .table-responsive {
-      max-height: 400px;
-      overflow-y: auto;
-      border: 1px solid var(--border-light);
-      border-radius: 0;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid var(--border-light); padding: 10px; text-align: center; font-size: 14px; }
-    th {
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      font-weight: 500;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      letter-spacing: 0.5px;
-    }
-    td { color: var(--text-primary); }
-    tr:nth-child(even) { background: rgba(232,225,208,0.3); }
-    .group-row { cursor: pointer; transition: background-color 0.3s; }
-    .group-row:hover { background: rgba(159,110,55,0.08) !important; }
-    .detail-row { background: rgba(242,237,230,0.5); font-size: 13px; color: var(--text-secondary); }
-    .toggle-icon { display: inline-block; width: 15px; transition: transform 0.3s; }
-    .toggle-icon.open { transform: rotate(90deg); }
-    .status-msg { margin-left: 15px; font-style: italic; color: var(--text-light); font-size: 13px; }
-    #resultArea {
-      margin-top: 15px;
-      padding: 15px;
-      background: rgba(107,143,94,0.08);
-      border-left: 3px solid #6b8f5e;
-      display: none;
-    }
-    .table-container { display: flex; gap: 20px; flex-wrap: wrap; }
-    .table-box { flex: 1; min-width: 450px; }
-    .table-loading { opacity: 0.5; pointer-events: none; transition: opacity 0.3s ease; }
-    .copy-box {
-      flex: 1;
-      background: rgba(255,255,255,0.5);
-      padding: 15px;
-      border: 1px solid var(--border-light);
-      display: none;
-      flex-direction: column;
-    }
-    textarea.copy-area {
-      width: 100%;
-      height: 160px;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 0;
-      box-sizing: border-box;
-      font-family: 'Noto Sans TC', Arial, sans-serif;
-      resize: vertical;
-      margin-bottom: 10px;
-      line-height: 1.6;
-      font-size: 14px;
-      background: rgba(255,255,255,0.6);
-      color: var(--text-primary);
-    }
-    /* Toast */
-    #toast {
-      visibility: hidden;
-      min-width: 250px;
-      color: #fff;
-      text-align: center;
-      border-radius: 0;
-      padding: 14px 28px;
-      position: fixed;
-      z-index: 1000;
-      left: 50%;
-      bottom: 30px;
-      transform: translateX(-50%);
-      font-size: 14px;
-      font-family: 'Noto Sans TC', Arial, sans-serif;
-      letter-spacing: 1px;
-      opacity: 0;
-      transition: opacity 0.4s, bottom 0.4s;
-    }
-    #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
-    #toast.success { background: rgba(107,143,94,0.92); }
-    #toast.error { background: rgba(160,82,45,0.92); }
-    /* 待確認入庫 */
-    #stagingArea {
-      border-left: 3px solid #b8860b;
-      background: rgba(248,243,235,0.7);
-      display: none;
-    }
-    .stage-input { width: 70px; padding: 4px; text-align: center; }
-    input[type="checkbox"].stage-cb { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
-    /* 出貨加入按鈕 */
-    .btn-add-cart {
-      font-size: 12px;
-      padding: 4px 10px;
-      margin: 0;
-      border-radius: 0;
-      background: transparent;
-      color: #b8860b;
-      border: 1px solid #b8860b;
-      cursor: pointer;
-      font-weight: 500;
-      font-family: 'Noto Sans TC', Arial, sans-serif;
-      transition: all 0.3s;
-    }
-    .btn-add-cart:hover { background: #b8860b; color: #fff; }
-    .btn-add-cart:disabled { border-color: var(--border) !important; color: var(--text-light) !important; background: transparent !important; cursor: not-allowed; }
-    .ret-qty-input {
-      width: 55px;
-      padding: 4px;
-      text-align: center;
-      border: 1px solid var(--border);
-      border-radius: 0;
-      background: rgba(255,255,255,0.5);
-    }
-    /* Tab */
-    .tab-bar {
-      display: flex;
-      gap: 0;
-      margin-bottom: 24px;
-      border-bottom: 1px solid var(--border);
-    }
-    .tab-btn {
-      padding: 12px 32px;
-      font-size: 15px;
-      font-weight: 500;
-      border: none;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      background: transparent;
-      color: var(--text-light);
-      border-radius: 0;
-      transition: all 0.3s;
-      letter-spacing: 1.5px;
-      font-family: 'Noto Sans TC', Arial, sans-serif;
-      margin-top: 0;
-    }
-    .tab-btn:hover { color: var(--text-primary); background: transparent; }
-    .tab-btn.active {
-      color: var(--accent);
-      border-bottom: 2px solid var(--accent);
-      background: transparent;
-    }
-    .tab-btn:hover:not(.active) { color: var(--text-secondary); background: transparent; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    /* 包材表格樣式 */
-    .pkg-qty-input {
-      width: 80px;
-      padding: 6px;
-      text-align: center;
-      border: 1px solid var(--border);
-      border-radius: 0;
-      background: rgba(255,255,255,0.5);
-      font-family: 'Noto Sans TC', Arial, sans-serif;
-    }
-    .pkg-table td { vertical-align: middle; }
-    .pkg-stock-zero { color: var(--border); }
-    .pkg-stock-has { color: var(--accent-dark); font-weight: 500; font-size: 16px; }
-  </style>
-</head>
-<body>
-  <h1>📦 庫存轉移系統</h1>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>LikeaDream 彌月試吃申請</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+      :root { --primary: #d4a373; --text: #4a4a4a; --bg: #fdf5e6; --white: #ffffff; --success: #52b788; --line: #06c755; }
+      body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; color: var(--text); background: var(--bg); min-height: 100vh; }
+      .container { max-width: 600px; margin: 0 auto; background: var(--white); padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); min-height: 500px; padding-bottom: 80px; }
+      .banner-container { width: 100%; max-width: 600px; margin: 0 auto; background: #fff; position: relative; }
+      .banner-img { width: 100%; height: auto; display: block; min-height: 200px; background: #eee; }
+      h2 { text-align: center; color: #6b4f4f; margin: 10px 0 20px 0; font-size: 1.5rem; }
+      label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #6b4f4f; }
+      .required::after { content: " *"; color: #d63031; }
+      input[type="text"], input[type="tel"], input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; transition: 0.3s; }
+      input:focus, select:focus { outline: none; border-color: var(--primary); }
+      .plan-group { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; }
+      .plan-item { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+      .plan-item:hover { background: #fffbf5; border-color: var(--primary); }
+      .plan-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
+      .plan-text { font-size: 15px; line-height: 1.4; display: flex; justify-content: space-between; width: 100%; }
+      .price-tag { color: #d63031; font-weight: bold; }
+      .radio-group { display: flex; gap: 15px; margin-top: 5px; }
+      .radio-item { flex: 1; display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+      .radio-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--primary); }
+      .radio-checked { border-color: var(--primary); background: #fffbf5; color: var(--primary); }
+      .store-info-box { display: none; background: #eef7fa; border: 1px solid #b8daff; border-radius: 8px; padding: 15px; color: #004085; font-size: 14px; line-height: 1.6; margin-top: 10px; }
+      .payment-box { background: #fff8ee; border: 2px solid #e4dccb; border-radius: 10px; padding: 15px; margin-top: 25px; }
+      .total-price { font-size: 1.1rem; color: #d63031; font-weight: bold; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
+      .price-detail { font-size: 0.9rem; color: #888; font-weight: normal; }
+      .bank-info { font-size: 14px; color: #555; line-height: 1.6; }
+      .bank-highlight { color: #000; font-weight: bold; font-size: 15px; margin-right: 5px; }
+      .btn-copy-small { font-size: 12px; padding: 2px 8px; border: 1px solid #d4a373; background: #fff; color: #d4a373; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+      .btn-copy-small:active { background: #d4a373; color: white; }
+      .btn { width: 100%; padding: 15px; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
+      .btn-submit { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(212, 163, 115, 0.3); }
+      .btn-outline { background: transparent; border: 1px solid #666; color: #666; margin-top: 10px; }
+      .success-card { text-align: center; padding: 20px 10px; }
+      .success-icon { font-size: 4rem; color: var(--success); margin-bottom: 15px; }
+      .success-title { font-size: 1.5rem; font-weight: bold; color: #333; margin-bottom: 10px; }
+      .success-desc { color: #888; font-size: 14px; margin-bottom: 20px; }
+      .order-summary { background: #f8f9fa; border-radius: 10px; padding: 20px; text-align: left; display: inline-block; width: 100%; box-sizing: border-box; border: 1px solid #eee; }
+      .summary-title { border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: #555; }
+      .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #444; }
+      .summary-total { font-size: 1.2rem; font-weight: bold; color: #d63031; text-align: right; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
+      .badge { display: inline-block; padding: 2px 8px; background: #e3f2fd; color: #0d6efd; border-radius: 4px; font-size: 12px; }
+      @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+      .hide { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="banner-container" id="mainBanner">
+      <img src="https://i.ibb.co/7xCpKKQp/image.png" class="banner-img" alt="試吃方案說明">
+    </div>
+    <div class="container" id="formView" style="display:block;">
+      <div id="liffStatus" style="font-size:12px; color:#ccc; text-align:center; margin-bottom:5px;">Loading...</div>
+      <h2>🍰 LikeaDream彌月試吃申請</h2>
+      <form id="tastingForm" onsubmit="event.preventDefault(); submitForm()">
+        <input type="hidden" id="userIdField" name="userId">
+        <input type="hidden" id="lineNameField" name="lineName">
 
-  <!-- ===== Tab 切換列 ===== -->
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('cake')">🎂 磅蛋糕</button>
-    <button class="tab-btn" onclick="switchTab('packaging')">📦 包材管理</button>
-  </div>
+        <label class="required">選擇申請方案 (可複選)</label>
+        <div class="plan-group">
+          <label class="plan-item"><input type="checkbox" name="plan1" value="方案一：蜂蜜蛋糕" data-price="300" onchange="calcTotal()"><span class="plan-text"><span>方案一：蜂蜜蛋糕</span> <span class="price-tag">$300</span></span></label>
+          <label class="plan-item"><input type="checkbox" name="plan2" value="方案二：曲奇餅乾" data-price="200" onchange="calcTotal()"><span class="plan-text"><span>方案二：曲奇餅乾</span> <span class="price-tag">$200</span></span></label>
+          <label class="plan-item"><input type="checkbox" name="plan3" value="方案三：蜂蜜蛋糕+曲奇" data-price="500" onchange="calcTotal()"><span class="plan-text"><span>方案三：蜂蜜蛋糕+曲奇</span> <span class="price-tag">$500</span></span></label>
+          <label class="plan-item"><input type="checkbox" name="plan4" value="方案四：Dreamy旋轉筒" data-price="350" onchange="calcTotal()"><span class="plan-text"><span>方案四：Dreamy旋轉筒</span> <span class="price-tag">$350</span></span></label>
+        </div>
 
-  <!-- ==================== 磅蛋糕分頁 ==================== -->
-  <div id="tab-cake" class="tab-content active">
-    <div class="table-container">
-      <!-- ===== 區塊 1：清水移轉至水源廠 ===== -->
-      <div class="section table-box">
-        <h2>1. 🚚 清水移轉至水源廠</h2>
-        <div class="flex-row" style="margin-bottom: 20px;">
-          <label style="color:#1a73e8;">🚚 配送日期:</label>
-          <input type="date" id="transferDate">
+        <label class="required">訂購姓名</label>
+        <input type="text" id="cName" required placeholder="請輸入您的姓名">
+
+        <label class="required">聯絡電話</label>
+        <input type="tel" id="cPhone" required placeholder="09xx-xxx-xxx" pattern="\d{10}" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+
+        <label>載具/統一編號 (選填)</label>
+        <input type="text" id="cTaxId" placeholder="若需載具/統編請填寫">
+
+        <label class="required">配送方式</label>
+        <div class="radio-group">
+          <label class="radio-item radio-checked" id="lblShip">
+            <input type="radio" name="deliveryMethod" value="宅配寄送" checked onchange="toggleDelivery('ship')"> 宅配寄送
+          </label>
+          <label class="radio-item" id="lblPickup">
+            <input type="radio" name="deliveryMethod" value="門市取貨" onchange="toggleDelivery('pickup')"> 門市取貨
+          </label>
         </div>
-        <div class="table-responsive" style="overflow-y: visible; border: none;">
-          <table style="width: 100%;">
-            <thead><tr><th>生產日期</th><th>物料品項</th><th>每組個數</th><th>欲移轉組數</th><th>特定客戶<br><small style="color:#888;">(選填)</small></th></tr></thead>
-            <tbody>
-              <tr>
-                <td><input type="date" id="prodDate_H" style="width:115px; padding:6px;"></td>
-                <td><strong>H-蜂蜜海鹽</strong></td>
-                <td><select id="qty_H" class="qty-select"></select></td>
-                <td><input type="number" id="group_H" min="0" value="0" style="width:70px;"></td>
-                <td><input type="text" id="cust_H" placeholder="填寫客戶名" style="width:80px;"></td>
-              </tr>
-              <tr>
-                <td><input type="date" id="prodDate_L" style="width:115px; padding:6px;"></td>
-                <td><strong>L-青檸</strong></td>
-                <td><select id="qty_L" class="qty-select"></select></td>
-                <td><input type="number" id="group_L" min="0" value="0" style="width:70px;"></td>
-                <td><input type="text" id="cust_L" placeholder="填寫客戶名" style="width:80px;"></td>
-              </tr>
-              <tr>
-                <td><input type="date" id="prodDate_A" style="width:115px; padding:6px;"></td>
-                <td><strong>A-蘋果伯爵</strong></td>
-                <td><select id="qty_A" class="qty-select"></select></td>
-                <td><input type="number" id="group_A" min="0" value="0" style="width:70px;"></td>
-                <td><input type="text" id="cust_A" placeholder="填寫客戶名" style="width:80px;"></td>
-              </tr>
-            </tbody>
-          </table>
+
+        <div id="storeInfoBox" class="store-info-box">
+          <strong>🍰 門市資訊</strong><br>
+          地址：台中市沙鹿區平等路52號<br>
+          電話：04-26525522<br>
+          取貨時間：11:00~17:45<br>
+          <span style="color:#d63031; font-size:12px;">★ 門市取貨免運費</span>
         </div>
-        <button id="btn-transfer" class="btn-blue" style="width:100%; margin-top: 15px;" onclick="generateStagingList()">產生入庫確認單 ⬇️</button>
-      </div>
-      <!-- ===== 區塊 2：水源廠即時庫存 + 整合出貨功能 ===== -->
-      <div class="section table-box">
-        <h2>👁️ 2. 水源廠即時庫存 <span style="font-size:13px; color:#888; font-weight:normal;">(展開明細可直接加入出貨)</span></h2>
-        <div id="loadingB" class="status-msg">載入中...</div>
-        <div class="table-responsive">
-          <table id="tableB" style="display:none; font-size:14px;">
-            <thead><tr>
-              <th>展開明細</th>
-              <th>品項</th>
-              <th>特定客戶</th>
-              <th>總數量(個)</th>
-              <th>總計組數</th>
-              <th style="min-width:140px;">出貨操作</th>
-            </tr></thead>
-            <tbody id="listB"></tbody>
-          </table>
+
+        <div id="addressBox">
+          <label class="required">收件地址</label>
+          <input type="text" id="cAddress" required placeholder="請填寫完整收件地址 (判斷本島/離島運費)" oninput="calcTotal()">
         </div>
-        <!-- 待出貨購物車 -->
-        <div id="returnStagingArea" style="display: none; margin-top: 20px; border-top: 2px dashed #ff9800; padding-top: 15px;">
-          <h3 style="color: #e65100; margin-top: 0;">🛒 待出貨清單</h3>
-          <div class="table-responsive" style="max-height: 250px;">
-            <table>
-              <thead><tr><th>品項</th><th>生產日</th><th>個數/組</th><th>特定客戶</th><th>組數</th><th>操作</th></tr></thead>
-              <tbody id="returnStagingList"></tbody>
-            </table>
+
+        <label class="required" id="dateLabel">希望出貨日</label>
+        <input type="date" id="cDate" required onchange="validateDate()">
+        <div id="dateErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:14px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:5px; border:1px solid #fc8181;">
+          ❌ 無法選擇過去日期或當天！<br>請選擇明天以後的日期。
+        </div>
+        <div id="sundayErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; animation: pulse 1.5s infinite;">
+          ⛔ 週日無收送服務、請改選其他日期
+        </div>
+        <div id="festivalErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:5px; border:1px solid #fc8181;">
+          🧨 2/15 ~ 2/22 春節休假期間暫停出貨/取貨
+        </div>
+        <div id="pickupOnlyMsg" style="display:none; color:#d63031; font-weight:bold; font-size:14px; margin-top:5px; animation: pulse 1.5s infinite;">
+          ⚠️ 2/13、2/14 因節日貨量大，僅限「門市自取」
+        </div>
+        <div style="font-size:12px; color:#666; margin-top:3px;" id="dateNote">
+          *宅配：最快出貨日為明天，寄出後約1-2天送達<br>*自取：請選擇取貨日期 (週日無配送/取貨)
+        </div>
+
+        <div class="payment-box">
+          <div class="total-price" id="totalDisplay">總金額：$0</div>
+          <label style="margin-top:0;">付款方式</label>
+          <select id="paymentMethod" onchange="togglePayment()">
+            <option value="匯款轉帳" selected>匯款轉帳</option>
+            <option value="LINE PAY">LINE PAY</option>
+            <option value="門市付款" id="optPayStore" disabled hidden style="display:none;">門市付款</option>
+          </select>
+          <div id="bankInfoArea">
+            <div class="bank-info" style="margin-top:15px;">
+              合作金庫 (006)<br>
+              <span class="bank-highlight" id="bankAccount">0570717234066</span>
+              <button type="button" class="btn-copy-small" onclick="copyBankAccount()">複製帳號</button>
+              <br>戶名：順道實業有限公司
+            </div>
+            <label class="required" style="margin-top:10px;">匯款帳號後五碼</label>
+            <input type="text" id="last5" placeholder="請輸入匯款後5碼" maxlength="5" pattern="\d{5}" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+            <div style="font-size:12px; color:#888; margin-top:5px;">(網銀備註請勿留字)</div>
           </div>
-          <div class="flex-row" style="margin-top: 15px; justify-content: flex-end;">
-            <label style="color:#fbbc04;">🚚 出貨日期:</label>
-            <input type="date" id="returnDate">
-            <span id="outStatus" class="status-msg"></span>
-            <button id="btn-confirm-return" class="btn-orange" onclick="submitConfirmedReturns()">🚚 確認批次出貨</button>
+          <div id="linePayArea" style="display:none; margin-top:15px; text-align:center;">
+            <p style="color:#06c755; font-weight:bold; margin-bottom:10px; font-size:16px;">🟢 LINE PAY 線上付款</p>
+            <div id="linePayReminder" style="color:#d63031; font-weight:bold; font-size:14px; margin-top:5px; padding:10px; background:#fff5f5; border:1px solid #fc8181; border-radius:5px; text-align:left;">
+              ⚠️ 提醒您：請先點擊下方「送出申請」，系統將於下一個畫面提供 LINE PAY 付款連結！
+            </div>
           </div>
         </div>
-        <!-- 出貨結果顯示 -->
-        <div id="resultArea">
-          <h3>✅ 已成功移出 B 點明細</h3>
-          <ul id="resultList"></ul>
+        <button type="submit" class="btn btn-submit" id="sBtn">送出申請</button>
+      </form>
+    </div>
+
+    <!-- ===== 成功畫面 ===== -->
+    <div class="container hide" id="successView">
+      <div class="success-card">
+        <i class="bi bi-check-circle-fill success-icon"></i>
+        <div class="success-title">申請已送出！</div>
+        <p class="success-desc">我們已收到您的申請，將盡快為您安排。</p>
+
+        <div style="margin-top: 15px; margin-bottom: 25px;">
+          <textarea id="copyArea" readonly style="position:absolute; left:-9999px;"></textarea>
+
+          <div id="successLinePayArea" style="display:none; margin-bottom:20px; text-align:center; background:#f0fbf4; padding:15px; border-radius:10px; border:1px solid #06c755;">
+            <p style="color:#06c755; font-weight:bold; margin-bottom:10px; font-size:16px;">🟢 請點擊下方按鈕完成付款</p>
+            <a href="https://qrcodepay.line.me/qr/payment/QdqOCMdjjjknMwK7IVaVWAGHqtXUHb9dyxr0623zplHMPwr2yO9jnQM%252F6rX0JNwu" target="_blank" class="btn" style="background:#06c755; color:white; display:inline-block; text-decoration:none; padding:12px 20px; font-size:16px; border-radius:8px; width:auto; box-shadow: 0 4px 10px rgba(6, 199, 85, 0.3);">
+              前往 LINE PAY 付款
+            </a>
+            <div style="color:#d63031; font-weight:bold; font-size:14px; margin-top:15px; text-align:left;">
+              ⚠️ 提醒您：付款完成後，請務必【截圖付款成功畫面】，並連同下方的訂單內容一併回傳給小幫手確認喔！
+            </div>
+          </div>
+
+          <div id="copyStatusMsg" style="font-weight:bold; font-size:16px; margin-bottom:15px; line-height: 1.5;"></div>
+
+          <div id="manualCopyBox" style="display:none; margin-bottom:15px;">
+            <div style="color:#d63031; font-weight:bold; font-size:16px; margin-bottom:10px; line-height: 1.5;">
+              ⚠️請點下方按鈕複製訂單內容後，再前往 LINE 回傳<br>請勿以截圖的方式傳送
+            </div>
+            <button class="btn btn-submit" onclick="manualCopy()" type="button" style="background:#d4a373;">
+              📋 複製訂單內容
+            </button>
+          </div>
+
+          <a id="goToLineArea" href="https://lin.ee/oOteG0d" target="_blank" style="text-decoration:none;">
+            <button class="btn btn-submit" type="button" style="background:#06c755;">
+              🚀 前往 LINE 回傳訂單
+            </button>
+          </a>
+        </div>
+
+        <div class="order-summary" id="summaryBox"></div>
+        <div style="margin-top: 20px;">
+           <button class="btn btn-outline" onclick="window.location.reload()">返回首頁</button>
         </div>
       </div>
     </div>
-    <!-- ===== 區塊 3：待確認入庫清單 ===== -->
-    <div id="stagingArea" class="section">
-      <h2>⏳ 3. 待確認入庫清單 <span style="font-size: 14px; color:#555; font-weight: normal;">(若數量有誤可直接修改，勾選後送出)</span></h2>
-      <div class="table-responsive">
-        <table>
-          <thead><tr><th>勾選入庫</th><th>生產日期</th><th>品項</th><th>個數/組</th><th>實際移轉組數</th><th>特定客戶</th></tr></thead>
-          <tbody id="stagingList"></tbody>
-        </table>
-      </div>
-      <div class="flex-row" style="margin-top: 15px; justify-content: flex-end;">
-        <span id="stagingStatus" class="status-msg"></span>
-        <button id="btn-confirm-staging" class="btn-green" onclick="submitCheckedStaging()">✅ 將已勾選項目正式入庫</button>
-      </div>
-    </div>
-    <!-- ===== 複製區塊 ===== -->
-    <div id="copySection" class="section" style="display: none; border-left: 5px solid #1a73e8;">
-      <h2>📋 系統產生轉運/出貨單 (一鍵複製)</h2>
-      <div id="copy-both-container" style="text-align: center; margin-bottom: 15px; display: none;">
-        <button class="btn-green" style="font-size: 16px; padding: 12px 30px;" onclick="copyBoth()">📄 點我一鍵複製【左右兩邊整合訊息】</button>
-      </div>
-      <div class="flex-row" style="align-items: stretch; gap: 20px;">
-        <div id="copy-left-box" class="copy-box">
-          <textarea id="copy-left-text" class="copy-area" readonly></textarea>
-          <button class="btn-blue" style="margin-top: auto;" onclick="copyText('copy-left-text')">複製左方文字</button>
-        </div>
-        <div id="copy-right-box" class="copy-box">
-          <textarea id="copy-right-text" class="copy-area" readonly></textarea>
-          <button class="btn-orange" style="margin-top: auto;" onclick="copyText('copy-right-text')">複製右方文字</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ==================== 包材管理分頁 ==================== -->
-  <div id="tab-packaging" class="tab-content">
-    <div class="table-container">
-      <!-- ===== 區塊 A：新增廠商製作訂單 ===== -->
-      <div class="section table-box">
-        <h2>🏭 A. 新增廠商製作訂單</h2>
-        <div class="table-responsive" style="overflow-y: visible; border: none;">
-          <table class="pkg-table">
-            <thead><tr><th>品項名稱</th><th>製作數量（個）</th></tr></thead>
-            <tbody id="pkgOrderList"></tbody>
-          </table>
-        </div>
-        <div class="flex-row" style="margin-top: 15px; justify-content: flex-end;">
-          <span id="pkgOrderStatus" class="status-msg"></span>
-          <button id="btn-pkg-order" class="btn-purple" onclick="submitPkgOrder()">🏭 確認下單製作</button>
-        </div>
-      </div>
-      <!-- ===== 區塊 B：廠商製作中 → 完成入庫 ===== -->
-      <div class="section table-box">
-        <h2>⏳ B. 廠商製作中 → 完成入庫</h2>
-        <div id="pkgMfgLoading" class="status-msg">載入中...</div>
-        <div class="table-responsive" style="overflow-y: visible; border: none;">
-          <table class="pkg-table" id="pkgMfgTable" style="display:none;">
-            <thead><tr><th>品項</th><th>製作中數量</th><th>完成數量</th><th>目的地</th><th>操作</th></tr></thead>
-            <tbody id="pkgMfgList"></tbody>
-          </table>
-        </div>
-        <div id="pkgMfgEmpty" style="display:none; text-align:center; color:#999; padding:20px;">目前無製作中的品項</div>
-      </div>
-    </div>
-    <div class="table-container">
-      <!-- ===== 區塊 C：廠商寄庫即時庫存 ===== -->
-      <div class="section table-box">
-        <h2>🏢 C. 廠商寄庫即時庫存</h2>
-        <div id="pkgVendorLoading" class="status-msg">載入中...</div>
-        <div class="table-responsive" style="overflow-y: visible; border: none;">
-          <table class="pkg-table" id="pkgVendorTable" style="display:none;">
-            <thead><tr><th>品項</th><th>🇨🇳 大陸</th><th>🇹🇼 台灣</th><th>來源</th><th>數量</th><th>目的地</th><th>操作</th></tr></thead>
-            <tbody id="pkgVendorList"></tbody>
-          </table>
-        </div>
-        <div id="pkgVendorEmpty" style="display:none; text-align:center; color:#999; padding:20px;">廠商寄庫目前無庫存</div>
-      </div>
-      <!-- ===== 區塊 D：水源寄庫即時庫存 ===== -->
-      <div class="section table-box">
-        <h2>💧 D. 水源寄庫即時庫存</h2>
-        <div id="pkgShuiyuanLoading" class="status-msg">載入中...</div>
-        <div class="table-responsive" style="overflow-y: visible; border: none;">
-          <table class="pkg-table" id="pkgShuiyuanTable" style="display:none;">
-            <thead><tr><th>品項</th><th>庫存數量（個）</th><th>回清水數量</th><th>操作</th></tr></thead>
-            <tbody id="pkgShuiyuanList"></tbody>
-          </table>
-        </div>
-        <div id="pkgShuiyuanEmpty" style="display:none; text-align:center; color:#999; padding:20px;">水源寄庫目前無庫存</div>
-      </div>
-    </div>
-  </div>
+    <script>
+      var GAS_API_URL = "https://script.google.com/macros/s/AKfycbw0qvdCYE4bRJ1V9R1nmdl95GBveMp6fNzH2unNDK1PGfkp-PKzKsGXnHMciUaG9lTKDA/exec";
 
-  <div id="toast"></div>
+      var currentUserId = "";
 
-  <script>
-    // ===== 共用常數 =====
-    const TYPE_NAMES = {
-      'H': 'H-蜂蜜海鹽',
-      'L': 'L-青檸',
-      'A': 'A-蘋果伯爵'
-    };
-    const PKG_ITEMS = [
-      '灰盒下底', '灰上盒蓋', '灰盒提袋', '灰盒內襯',
-      '磅蛋糕下底', '磅蛋糕上蓋', '磅蛋糕提袋',
-      '（小）宅配箱', '（中）宅配箱', '（大）宅配箱'
-    ];
-    const PKG_LOC_NAMES = {
-      'M': '製作中', 'VC': '大陸廠商寄庫', 'VT': '台灣廠商寄庫', 'S': '水源寄庫'
-    };
+      // ===== 頁面載入 =====
+      window.onload = function() {
+        var today = new Date();
+        var tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        var minDate = tomorrow.toISOString().split('T')[0];
+        document.getElementById("cDate").min = minDate;
+        initializeLiff('2008790381-8Lkh37NS');
+      };
 
-    // ===== 磅蛋糕狀態 =====
-    let stagingDataArr = [];
-    let returnStagingArr = [];
-    let globalInventoryData = [];
-    let detailRowMap = {};
-    let detailRowCounter = 0;
+      // ===== LIFF 初始化 =====
+      function initializeLiff(myLiffId) {
+        liff.init({ liffId: myLiffId })
+          .then(function() {
+            document.getElementById("liffStatus").style.display = "none";
+            if (liff.isLoggedIn()) {
+              liff.getProfile().then(function(profile) {
+                currentUserId = profile.userId;
+                var field = document.getElementById("userIdField");
+                if (field) field.value = currentUserId;
+                var nameField = document.getElementById("lineNameField");
+                if (nameField) nameField.value = profile.displayName;
+                var cNameInput = document.getElementById("cName");
+                if (cNameInput && !cNameInput.value) { cNameInput.value = profile.displayName; }
+              });
+            } else {
+              console.log("Web Mode - 外部瀏覽器開啟");
+            }
+          })
+          .catch(function(err) {
+            console.error("LIFF Init Error:", err);
+            document.getElementById("liffStatus").innerText = "初始化失敗，但仍可填寫";
+          });
+      }
 
-    // ===== 包材狀態 =====
-    let pkgInventoryData = []; // [{item, location, qty}, ...]
+      // ===== 複製銀行帳號 =====
+      function copyBankAccount() {
+        var acct = document.getElementById("bankAccount").innerText;
+        navigator.clipboard.writeText(acct)
+          .then(function() { alert("帳號已複製"); })
+          .catch(function() { alert("複製失敗"); });
+      }
 
-    // ===== Tab 切換 =====
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
-      document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
-      document.getElementById('tab-' + tabName).classList.add('active');
-      var btns = document.querySelectorAll('.tab-btn');
-      if (tabName === 'cake') { btns[0].classList.add('active'); }
-      else { btns[1].classList.add('active'); }
-      if (tabName === 'packaging') { refreshPkgTables(); }
-    }
+      // ===== 日期驗證 =====
+      function validateDate() {
+        var input = document.getElementById("cDate");
+        var dateStr = input.value;
+        var errorMsg = document.getElementById("dateErrorMsg");
+        var sundayMsg = document.getElementById("sundayErrorMsg");
+        var festivalMsg = document.getElementById("festivalErrorMsg");
+        var pickupMsg = document.getElementById("pickupOnlyMsg");
+        var radioShip = document.querySelector('input[value="宅配寄送"]');
+        var lblShip = document.getElementById('lblShip');
+        var radioPickup = document.querySelector('input[value="門市取貨"]');
 
-    // ===== 初始化 =====
-    window.onload = function() {
-      var today = new Date();
-      document.getElementById('transferDate').valueAsDate = today;
-      document.getElementById('returnDate').valueAsDate = today;
-      ['H', 'L', 'A'].forEach(function(type) { document.getElementById('prodDate_' + type).valueAsDate = today; });
-      var selects = document.querySelectorAll('.qty-select');
-      selects.forEach(function(select) {
-        for(var i = 1; i <= 50; i++) {
-          var opt = document.createElement('option');
-          opt.value = i; opt.text = i + ' 個';
-          if(i === 40) opt.selected = true;
-          select.appendChild(opt);
+        errorMsg.style.display = "none";
+        sundayMsg.style.display = "none";
+        festivalMsg.style.display = "none";
+        pickupMsg.style.display = "none";
+
+        if (!dateStr) {
+          radioShip.disabled = false;
+          lblShip.style.opacity = "1";
+          lblShip.style.pointerEvents = "auto";
+          return;
         }
-      });
-      buildPkgOrderTable();
-      refreshAllTables();
-    };
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var parts = dateStr.split('-');
+        var year = parseInt(parts[0]);
+        var month = parseInt(parts[1]);
+        var day = parseInt(parts[2]);
+        var selectedDate = new Date(year, month - 1, day);
 
-    // ===== 共用工具 =====
-    function showToast(msg, type) {
-      type = type || 'success';
-      var toast = document.getElementById('toast');
-      toast.innerText = msg;
-      toast.className = 'show ' + type;
-      setTimeout(function() { toast.className = toast.className.replace('show', ''); }, 3000);
-    }
-    function setProcessingState(btnId, statusId, isProcessing, loadingText, successText) {
-      var btn = document.getElementById(btnId);
-      var status = document.getElementById(statusId);
-      if (isProcessing) {
-        btn.disabled = true;
-        status.innerText = loadingText; status.style.color = '#666';
-      } else {
-        btn.disabled = false;
-        if(successText) {
-          status.innerText = successText; status.style.color = '#34a853';
-          setTimeout(function() { status.innerText = ''; }, 3000);
+        if (selectedDate <= today) {
+          errorMsg.style.display = "block";
+          input.value = "";
+          if (navigator.vibrate) navigator.vibrate(200);
+          return;
+        }
+        if (month === 2 && day >= 15 && day <= 22) {
+          festivalMsg.style.display = "block";
+          input.value = "";
+          if (navigator.vibrate) navigator.vibrate(200);
+          radioShip.disabled = false;
+          lblShip.style.opacity = "1";
+          lblShip.style.pointerEvents = "auto";
+          return;
+        }
+        if (selectedDate.getDay() === 0) {
+          sundayMsg.style.display = "block";
+          input.value = "";
+          if (navigator.vibrate) navigator.vibrate(200);
+          return;
+        }
+        if (month === 2 && (day === 13 || day === 14)) {
+          pickupMsg.style.display = "block";
+          radioPickup.checked = true;
+          toggleDelivery('pickup');
+          radioShip.disabled = true;
+          lblShip.style.opacity = "0.5";
+          lblShip.style.pointerEvents = "none";
         } else {
-          status.innerText = '';
+          radioShip.disabled = false;
+          lblShip.style.opacity = "1";
+          lblShip.style.pointerEvents = "auto";
         }
       }
-    }
-    function copyText(elementId) {
-      navigator.clipboard.writeText(document.getElementById(elementId).value)
-        .then(function() { showToast('✅ 複製成功！'); }).catch(function(err) { showToast('複製失敗: ' + err, 'error'); });
-    }
-    function copyBoth() {
-      var combined = document.getElementById('copy-left-text').value + '\n\n====================\n\n' + document.getElementById('copy-right-text').value;
-      navigator.clipboard.writeText(combined).then(function() { showToast('✅ 雙邊整合複製成功！'); }).catch(function(err) { showToast('複製失敗: ' + err, 'error'); });
-    }
-    function checkCopySectionDisplay() {
-      var leftVisible = document.getElementById('copy-left-box').style.display !== 'none';
-      var rightVisible = document.getElementById('copy-right-box').style.display !== 'none';
-      document.getElementById('copySection').style.display = (leftVisible || rightVisible) ? 'block' : 'none';
-      document.getElementById('copy-both-container').style.display = (leftVisible && rightVisible) ? 'block' : 'none';
-    }
 
-    // ===== 磅蛋糕功能 (原有邏輯不變) =====
-    function refreshAllTables() {
-      loadInventory('B', 'loadingB', 'tableB', 'listB');
-    }
-    function promptEditCustomer(type, date, qty, oldCust) {
-      try {
-        var oldCustDisplay = oldCust ? oldCust : '無(一般物料)';
-        var newCust = prompt('正在修改 [' + (TYPE_NAMES[type] || type) + '] (生產日: ' + date + ', 規格: ' + qty + '個/組)\n當前客戶: ' + oldCustDisplay + '\n\n✏️ 請輸入新的客戶名稱\n(若要改回一般物料，請清空並按下確定):', oldCust);
-        if (newCust === null) return;
-        newCust = newCust.trim();
-        if (newCust === oldCust) return;
-        var loadingEl = document.getElementById('loadingB');
-        var tableEl = document.getElementById('tableB');
-        loadingEl.style.display = 'block';
-        loadingEl.innerText = '⏳ 更新客戶資料中... (請稍候)';
-        tableEl.classList.add('table-loading');
-        google.script.run
-          .withSuccessHandler(function(count) {
-             showToast('✅ 成功更新 ' + count + ' 組的客戶資料！');
-             loadingEl.innerText = '載入中...';
-             refreshAllTables();
-          })
-          .withFailureHandler(function(err) {
-             var errorMsg = (err && err.message) ? err.message : String(err);
-             showToast('⚠️ 更新失敗: ' + errorMsg, 'error');
-             loadingEl.innerText = '載入中...';
-             loadingEl.style.display = 'none';
-             tableEl.classList.remove('table-loading');
-          })
-          .updateCustomerBatch(type, date, qty, oldCust, newCust);
-      } catch(e) {
-        showToast('前端執行發生異常: ' + e.message, 'error');
-        document.getElementById('loadingB').style.display = 'none';
-        document.getElementById('tableB').classList.remove('table-loading');
-      }
-    }
-    function loadInventory(location, loadId, tableId, listId) {
-      document.getElementById(loadId).style.display = 'block';
-      document.getElementById(tableId).classList.add('table-loading');
-      google.script.run.withSuccessHandler(function(data) { renderTable(data, location, loadId, tableId, listId); }).getGroupedInventory(location);
-    }
-    function toggleDetails(className, iconObj) {
-      var rows = document.querySelectorAll('.' + className);
-      var isOpening = false;
-      rows.forEach(function(row) {
-        if (row.style.display === 'none') { row.style.display = 'table-row'; isOpening = true; }
-        else { row.style.display = 'none'; }
-      });
-      if (iconObj) {
-        iconObj.classList.toggle('open', isOpening);
-        iconObj.innerHTML = isOpening ? '▼' : '▶';
-      }
-    }
-    function renderTable(data, location, loadId, tableId, listId) {
-      globalInventoryData = data;
-      detailRowMap = {};
-      detailRowCounter = 0;
-      document.getElementById(loadId).style.display = 'none';
-      var tableEl = document.getElementById(tableId);
-      tableEl.classList.remove('table-loading'); tableEl.style.display = 'table';
-      var tbody = document.getElementById(listId);
-      tbody.innerHTML = '';
-      var displayGroups = {};
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">目前沒有庫存資料。</td></tr>';
-      } else {
-        data.forEach(function(item) {
-          var custStr = item.customer ? item.customer : '-';
-          var groupKey = item.type + '_' + custStr;
-          var pieces = item.qtyPerGroup * item.count;
-          if (!displayGroups[groupKey]) {
-            displayGroups[groupKey] = { type: item.type, customer: item.customer, totalPieces: 0, totalGroups: 0, details: [] };
+      // ===== 配送方式切換 =====
+      function toggleDelivery(type) {
+        var addrBox = document.getElementById('addressBox');
+        var storeBox = document.getElementById('storeInfoBox');
+        var cAddress = document.getElementById('cAddress');
+        var optPayStore = document.getElementById('optPayStore');
+        var paymentSelect = document.getElementById('paymentMethod');
+
+        document.getElementById('lblShip').className = type === 'ship' ? 'radio-item radio-checked' : 'radio-item';
+        document.getElementById('lblPickup').className = type === 'pickup' ? 'radio-item radio-checked' : 'radio-item';
+
+        if (type === 'pickup') {
+          addrBox.style.display = 'none';
+          cAddress.removeAttribute('required');
+          storeBox.style.display = 'block';
+          optPayStore.disabled = false;
+          optPayStore.hidden = false;
+          optPayStore.style.display = 'block';
+          document.getElementById('dateLabel').innerText = "希望取貨日";
+          document.getElementById('dateNote').innerText = "*取貨時間：11:00~17:45 (週日公休)";
+        } else {
+          addrBox.style.display = 'block';
+          cAddress.setAttribute('required', '');
+          storeBox.style.display = 'none';
+          optPayStore.disabled = true;
+          optPayStore.hidden = true;
+          optPayStore.style.display = 'none';
+          if (paymentSelect.value === '門市付款') {
+            paymentSelect.value = '匯款轉帳';
+            togglePayment();
           }
-          displayGroups[groupKey].totalPieces += pieces;
-          displayGroups[groupKey].totalGroups += item.count;
-          displayGroups[groupKey].details.push(item);
-        });
-        Object.values(displayGroups).forEach(function(group, idx) {
-          var custHtml = group.customer ? '<span style="color:#1a73e8; font-weight:bold;">' + group.customer + '</span>' : '<span style="color:#aaa;">-</span>';
-          var detailClass = 'detail-' + idx;
-          var tr = document.createElement('tr');
-          tr.className = 'group-row';
-          tr.onclick = function() { toggleDetails(detailClass, this.querySelector('.toggle-icon')); };
-          tr.innerHTML =
-            '<td><span class="toggle-icon">▶</span> 展開</td>' +
-            '<td><strong style="font-size: 16px;">' + (TYPE_NAMES[group.type] || group.type) + '</strong></td>' +
-            '<td>' + custHtml + '</td>' +
-            '<td style="color:#1a73e8; font-weight:bold; font-size: 15px;">' + group.totalPieces + '</td>' +
-            '<td><span style="color:red; font-weight:bold;">' + group.totalGroups + '</span> 組</td>' +
-            '<td></td>';
-          tbody.appendChild(tr);
-          group.details.forEach(function(det) {
-            var subPieces = det.qtyPerGroup * det.count;
-            var uid = 'drow_' + (detailRowCounter++);
-            detailRowMap[uid] = {
-              type: det.type || group.type, date: det.date, qtyPerGroup: det.qtyPerGroup,
-              customer: det.customer !== undefined ? det.customer : group.customer, originalCount: det.count
-            };
-            var custEscaped = (det.customer || '').replace(/'/g, "\\'");
-            var dtr = document.createElement('tr');
-            dtr.className = 'detail-row ' + detailClass;
-            dtr.style.display = 'none';
-            dtr.innerHTML =
-              '<td style="text-align:right; color:#888;">└ 明細:</td>' +
-              '<td>生產日: <strong>' + det.date + '</strong></td>' +
-              '<td><button onclick="event.stopPropagation(); promptEditCustomer(\'' + det.type + '\', \'' + det.date + '\', ' + det.qtyPerGroup + ', \'' + custEscaped + '\')" style="font-size:12px; padding:4px 8px; margin:0; border-radius:4px; background-color:#fbbc04; color:#333; border:none; cursor:pointer;">✏️ 修改</button></td>' +
-              '<td><span style="color:#666;">' + det.qtyPerGroup + ' 個/組</span></td>' +
-              '<td>' + det.count + ' 組 <span style="color:#888; font-size: 12px;">(計' + subPieces + '個)</span></td>' +
-              '<td style="white-space: nowrap;">' +
-                '<input type="number" id="retQty_' + uid + '" class="ret-qty-input" min="0" max="' + det.count + '" value="0" onclick="event.stopPropagation();">' +
-                ' <button class="btn-add-cart" id="retBtn_' + uid + '" onclick="event.stopPropagation(); addDetailToReturn(\'' + uid + '\');">🛒 加入</button>' +
-              '</td>';
-            tbody.appendChild(dtr);
-          });
-        });
+          document.getElementById('dateLabel').innerText = "希望出貨日";
+          document.getElementById('dateNote').innerText = "*最快出貨日為明天，實際到貨約出貨後1-2天";
+        }
+        calcTotal();
       }
-      updateDetailReturnLimits();
-    }
-    function addDetailToReturn(uid) {
-      var info = detailRowMap[uid];
-      if (!info) return;
-      var input = document.getElementById('retQty_' + uid);
-      var qty = parseInt(input.value, 10);
-      if (!qty || qty <= 0) return showToast('請輸入大於 0 的組數！', 'error');
-      var available = getAvailableCount(uid);
-      if (qty > available) return showToast('此項目目前僅剩 ' + available + ' 組可加入！', 'error');
-      var existing = returnStagingArr.find(function(r) {
-        return r.type === info.type && r.date === info.date && r.qtyPerGroup === info.qtyPerGroup && r.customer === info.customer;
-      });
-      if (existing) { existing.groups += qty; }
-      else {
-        returnStagingArr.push({
-          id: 'ret_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-          type: info.type, date: info.date, qtyPerGroup: info.qtyPerGroup, customer: info.customer, groups: qty
-        });
-      }
-      input.value = 0;
-      renderReturnStaging();
-      updateDetailReturnLimits();
-      document.getElementById('returnStagingArea').style.display = 'block';
-      showToast('✅ 已加入待出貨清單！');
-    }
-    function getAvailableCount(uid) {
-      var info = detailRowMap[uid];
-      if (!info) return 0;
-      var key = info.type + '_' + info.date + '_' + info.qtyPerGroup + '_' + info.customer;
-      var used = 0;
-      returnStagingArr.forEach(function(item) {
-        var itemKey = item.type + '_' + item.date + '_' + item.qtyPerGroup + '_' + item.customer;
-        if (itemKey === key) used += item.groups;
-      });
-      return Math.max(0, info.originalCount - used);
-    }
-    function updateDetailReturnLimits() {
-      var cartUsage = {};
-      returnStagingArr.forEach(function(item) {
-        var key = item.type + '_' + item.date + '_' + item.qtyPerGroup + '_' + item.customer;
-        cartUsage[key] = (cartUsage[key] || 0) + item.groups;
-      });
-      Object.keys(detailRowMap).forEach(function(uid) {
-        var info = detailRowMap[uid];
-        var key = info.type + '_' + info.date + '_' + info.qtyPerGroup + '_' + info.customer;
-        var used = cartUsage[key] || 0;
-        var available = Math.max(0, info.originalCount - used);
-        var input = document.getElementById('retQty_' + uid);
-        var btn = document.getElementById('retBtn_' + uid);
-        if (input) { input.max = available; if (parseInt(input.value) > available) input.value = available; input.disabled = (available === 0); }
-        if (btn) { btn.disabled = (available === 0); }
-      });
-    }
-    function renderReturnStaging() {
-      var tbody = document.getElementById('returnStagingList');
-      tbody.innerHTML = '';
-      if (returnStagingArr.length === 0) { document.getElementById('returnStagingArea').style.display = 'none'; return; }
-      returnStagingArr.forEach(function(item) {
-        var tr = document.createElement('tr');
-        var custDisplay = item.customer ? '<span style="color:#1a73e8; font-weight:bold;">' + item.customer + '</span>' : '<span style="color:#aaa;">(一般物料)</span>';
-        tr.innerHTML =
-          '<td><strong>' + (TYPE_NAMES[item.type] || item.type) + '</strong></td>' +
-          '<td>' + item.date + '</td>' +
-          '<td>' + item.qtyPerGroup + ' 個/組</td>' +
-          '<td>' + custDisplay + '</td>' +
-          '<td><strong style="color:red;">' + item.groups + '</strong> 組</td>' +
-          '<td><button onclick="removeReturnItem(\'' + item.id + '\')" style="background:none; border:none; color:#ea4335; font-weight:bold; cursor:pointer; font-size:14px;">❌ 移除</button></td>';
-        tbody.appendChild(tr);
-      });
-    }
-    function removeReturnItem(id) {
-      returnStagingArr = returnStagingArr.filter(function(item) { return item.id !== id; });
-      renderReturnStaging();
-      updateDetailReturnLimits();
-    }
-    function submitConfirmedReturns() {
-      if (returnStagingArr.length === 0) return;
-      var returnDate = document.getElementById('returnDate').value;
-      var aggMap = {};
-      returnStagingArr.forEach(function(item) {
-        var key = item.type + '_' + item.customer;
-        if (!aggMap[key]) aggMap[key] = { type: item.type, groups: 0, customer: item.customer };
-        aggMap[key].groups += item.groups;
-      });
-      var requestsToSend = Object.values(aggMap);
-      document.getElementById('resultArea').style.display = 'none';
-      setProcessingState('btn-confirm-return', 'outStatus', true, '⏳ 系統計算扣除中...');
-      google.script.run
-        .withSuccessHandler(function(consumedList) {
-          setProcessingState('btn-confirm-return', 'outStatus', false);
-          showToast('✅ 成功批次從水源移回清水！');
-          showTransferResult(consumedList);
-          var agg = {};
-          consumedList.forEach(function(item) {
-            var parts = item.date.split('-');
-            var mdDate = parts.length >= 3 ? (parseInt(parts[1], 10) + '/' + parseInt(parts[2], 10)) : item.date;
-            var key = mdDate + '_' + item.type + '_' + item.qtyPerGroup + '_' + item.customer;
-            if(!agg[key]) agg[key] = { dateStr: mdDate, type: item.type, qty: item.qtyPerGroup, customer: item.customer, count: 0 };
-            agg[key].count += item.count;
-          });
-          var copyTextStr = '明天送清水\n\n【出貨日期：' + returnDate + '】\n\n從水源返回清水出貨，品項及數量如下 :\n\n';
-          var idx = 1;
-          Object.values(agg).forEach(function(item) {
-             var custText = item.customer ? ' (客戶: ' + item.customer + ')' : '';
-             copyTextStr += idx++ + '. ' + item.dateStr + ' ' + item.type + '*' + item.qty + custText + ' - ' + item.count + ' 組\n';
-          });
-          document.getElementById('copy-right-text').value = copyTextStr;
-          document.getElementById('copy-right-box').style.display = 'flex';
-          checkCopySectionDisplay();
-          returnStagingArr = [];
-          renderReturnStaging();
-          refreshAllTables();
-        })
-        .withFailureHandler(function(err) {
-          setProcessingState('btn-confirm-return', 'outStatus', false);
-          showToast('錯誤: ' + err.message, 'error');
-        })
-        .batchConsumeFromB(requestsToSend);
-    }
-    function showTransferResult(list) {
-      var resultArea = document.getElementById('resultArea');
-      var resultList = document.getElementById('resultList');
-      resultList.innerHTML = '';
-      if (list.length === 0) return;
-      list.forEach(function(item) {
-        var li = document.createElement('li');
-        var custText = item.customer ? '<span style="color:#1a73e8;">(客戶: ' + item.customer + ')</span> ' : '';
-        li.innerHTML = '原生產日 <strong>' + item.date + '</strong> 的 <strong>' + (TYPE_NAMES[item.type] || item.type) + '</strong> ' + custText + '(' + item.qtyPerGroup + '個/組) - 共扣除 <span style="color:red;">' + item.count + '</span> 組';
-        resultList.appendChild(li);
-      });
-      resultArea.style.display = 'block';
-    }
-    function generateStagingList() {
-      var transfers = ['H', 'L', 'A'].map(function(type) {
-        return {
-          id: 'stage_' + Date.now() + '_' + type, type: type,
-          prodDate: document.getElementById('prodDate_' + type).value,
-          qtyPerGroup: document.getElementById('qty_' + type).value,
-          transferCount: parseInt(document.getElementById('group_' + type).value, 10),
-          customer: document.getElementById('cust_' + type).value.trim()
-        };
-      }).filter(function(item) { return item.transferCount > 0; });
-      if (transfers.length === 0) return showToast('請至少輸入一項大於 0 的移轉組數！', 'error');
-      for(var i = 0; i < transfers.length; i++) {
-        if(!transfers[i].prodDate) return showToast('請確認 ' + transfers[i].type + ' 大類的生產日期！', 'error');
-      }
-      stagingDataArr = stagingDataArr.concat(transfers);
-      renderStagingTable();
-      document.getElementById('stagingArea').style.display = 'block';
-      ['H', 'L', 'A'].forEach(function(t) { document.getElementById('group_' + t).value = 0; document.getElementById('cust_' + t).value = ''; });
-      showToast('已產生待確認單，請核對數量後勾選入庫！');
-    }
-    function renderStagingTable() {
-      var tbody = document.getElementById('stagingList');
-      tbody.innerHTML = '';
-      stagingDataArr.sort(function(a,b) { return new Date(a.prodDate) - new Date(b.prodDate); });
-      stagingDataArr.forEach(function(item) {
-        var tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td><input type="checkbox" class="stage-cb" data-id="' + item.id + '" checked></td>' +
-          '<td><input type="date" class="stage-input" style="width:115px;" id="date_' + item.id + '" value="' + item.prodDate + '"></td>' +
-          '<td><select class="stage-input" id="type_' + item.id + '"><option value="H"' + (item.type === 'H' ? ' selected' : '') + '>H-蜂蜜海鹽</option><option value="L"' + (item.type === 'L' ? ' selected' : '') + '>L-青檸</option><option value="A"' + (item.type === 'A' ? ' selected' : '') + '>A-蘋果伯爵</option></select></td>' +
-          '<td><input type="number" class="stage-input" id="qtyPer_' + item.id + '" min="1" max="50" value="' + item.qtyPerGroup + '"></td>' +
-          '<td><input type="number" class="stage-input" id="qty_' + item.id + '" min="1" value="' + item.transferCount + '"> 組</td>' +
-          '<td><input type="text" class="stage-input" style="width:80px;" id="cust_' + item.id + '" value="' + item.customer + '"></td>';
-        tbody.appendChild(tr);
-      });
-    }
-    function submitCheckedStaging() {
-      var checkboxes = document.querySelectorAll('.stage-cb:checked');
-      if (checkboxes.length === 0) return showToast('請至少勾選一個項目入庫！', 'error');
-      var finalTransfers = [];
-      var remainingStaging = [];
-      stagingDataArr.forEach(function(origItem) {
-        var cb = document.querySelector('.stage-cb[data-id="' + origItem.id + '"]');
-        if (cb && cb.checked) {
-          finalTransfers.push({
-            type: document.getElementById('type_' + origItem.id).value,
-            qtyPerGroup: document.getElementById('qtyPer_' + origItem.id).value,
-            prodDate: document.getElementById('date_' + origItem.id).value,
-            transferCount: parseInt(document.getElementById('qty_' + origItem.id).value, 10),
-            customer: document.getElementById('cust_' + origItem.id).value.trim()
-          });
-        } else { remainingStaging.push(origItem); }
-      });
-      setProcessingState('btn-confirm-staging', 'stagingStatus', true, '⏳ 寫入並移轉中...');
-      google.script.run
-        .withSuccessHandler(function() {
-          setProcessingState('btn-confirm-staging', 'stagingStatus', false);
-          showToast('✅ 勾選項目批次入庫成功！');
-          var transferDate = document.getElementById('transferDate').value;
-          var copyTextStr = '【配送日期：' + transferDate + '】\n清水需轉運至水源，品項及數量如下 :\n';
-          finalTransfers.forEach(function(item, index) {
-              var parts = item.prodDate.split('-');
-              var mdDate = parts.length >= 3 ? (parseInt(parts[1], 10) + '/' + parseInt(parts[2], 10)) : item.prodDate;
-              var custText = item.customer ? ' (客戶: ' + item.customer + ')' : '';
-              copyTextStr += (index + 1) + '. ' + mdDate + ' ' + (TYPE_NAMES[item.type] || item.type) + ' ' + item.qtyPerGroup + '個/組' + custText + ' - ' + item.transferCount + ' 組\n';
-          });
-          document.getElementById('copy-left-text').value = copyTextStr;
-          document.getElementById('copy-left-box').style.display = 'flex';
-          checkCopySectionDisplay();
-          stagingDataArr = remainingStaging;
-          if (stagingDataArr.length === 0) { document.getElementById('stagingArea').style.display = 'none'; }
-          else { renderStagingTable(); }
-          refreshAllTables();
-        })
-        .withFailureHandler(function(err) {
-          setProcessingState('btn-confirm-staging', 'stagingStatus', false);
-          showToast('移轉失敗: ' + err.message, 'error');
-        })
-        .directTransferToB(finalTransfers);
-    }
 
-    // ===== 包材管理功能 =====
+      // ===== 付款方式切換 =====
+      function togglePayment() {
+        var method = document.getElementById('paymentMethod').value;
+        var bankArea = document.getElementById('bankInfoArea');
+        var linePayArea = document.getElementById('linePayArea');
+        var last5 = document.getElementById('last5');
 
-    // 建立區塊 A 的品項表格
-    function buildPkgOrderTable() {
-      var tbody = document.getElementById('pkgOrderList');
-      tbody.innerHTML = '';
-      PKG_ITEMS.forEach(function(item, idx) {
-        var tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td style="text-align:left; padding-left:15px;"><strong>' + item + '</strong></td>' +
-          '<td><input type="number" id="pkgOrd_' + idx + '" class="pkg-qty-input" min="0" value="0"> 個</td>';
-        tbody.appendChild(tr);
-      });
-    }
-
-    // 取得包材庫存中某品項某地點的數量
-    function getPkgQty(itemName, location) {
-      for (var i = 0; i < pkgInventoryData.length; i++) {
-        if (pkgInventoryData[i].item === itemName && pkgInventoryData[i].location === location) {
-          return pkgInventoryData[i].qty;
+        if (method === '門市付款') {
+          bankArea.style.display = 'none';
+          linePayArea.style.display = 'none';
+          last5.removeAttribute('required');
+          last5.value = "";
+        } else if (method === 'LINE PAY') {
+          bankArea.style.display = 'none';
+          linePayArea.style.display = 'block';
+          last5.removeAttribute('required');
+          last5.value = "";
+        } else {
+          bankArea.style.display = 'block';
+          linePayArea.style.display = 'none';
+          last5.setAttribute('required', '');
         }
       }
-      return 0;
-    }
 
-    // 刷新所有包材表格
-    function refreshPkgTables() {
-      document.getElementById('pkgMfgLoading').style.display = 'block';
-      document.getElementById('pkgMfgTable').style.display = 'none';
-      document.getElementById('pkgMfgEmpty').style.display = 'none';
-      document.getElementById('pkgVendorLoading').style.display = 'block';
-      document.getElementById('pkgVendorTable').style.display = 'none';
-      document.getElementById('pkgVendorEmpty').style.display = 'none';
-      document.getElementById('pkgShuiyuanLoading').style.display = 'block';
-      document.getElementById('pkgShuiyuanTable').style.display = 'none';
-      document.getElementById('pkgShuiyuanEmpty').style.display = 'none';
-      google.script.run
-        .withSuccessHandler(function(data) {
-          pkgInventoryData = data || [];
-          renderPkgMfgTable();
-          renderPkgVendorTable();
-          renderPkgShuiyuanTable();
-        })
-        .withFailureHandler(function(err) {
-          showToast('包材庫存載入失敗: ' + err.message, 'error');
-          document.getElementById('pkgMfgLoading').style.display = 'none';
-          document.getElementById('pkgVendorLoading').style.display = 'none';
-          document.getElementById('pkgShuiyuanLoading').style.display = 'none';
-        })
-        .getPackagingInventory();
-    }
+      // ===== 計算總金額 =====
+      function calcTotal() {
+        var productTotal = 0;
+        var hasSelected = false;
+        var checks = document.querySelectorAll('input[name^="plan"]:checked');
+        checks.forEach(function(el) {
+          productTotal += parseInt(el.getAttribute('data-price')) || 0;
+          hasSelected = true;
+        });
 
-    // 區塊 A：確認下單製作
-    function submitPkgOrder() {
-      var items = [];
-      PKG_ITEMS.forEach(function(item, idx) {
-        var qty = parseInt(document.getElementById('pkgOrd_' + idx).value, 10);
-        if (qty > 0) items.push({ item: item, qty: qty });
-      });
-      if (items.length === 0) return showToast('請至少輸入一項大於 0 的製作數量！', 'error');
-      setProcessingState('btn-pkg-order', 'pkgOrderStatus', true, '⏳ 寫入中...');
-      google.script.run
-        .withSuccessHandler(function() {
-          setProcessingState('btn-pkg-order', 'pkgOrderStatus', false, '', '✅ 下單成功');
-          showToast('✅ 廠商製作訂單已建立！');
-          PKG_ITEMS.forEach(function(item, idx) { document.getElementById('pkgOrd_' + idx).value = 0; });
-          refreshPkgTables();
-        })
-        .withFailureHandler(function(err) {
-          setProcessingState('btn-pkg-order', 'pkgOrderStatus', false);
-          showToast('下單失敗: ' + err.message, 'error');
-        })
-        .addPackagingStock(items);
-    }
+        var shippingFee = 0;
+        var shippingType = "";
+        var isPickup = document.querySelector('input[name="deliveryMethod"]:checked').value === "門市取貨";
 
-    // 區塊 B：渲染廠商製作中表格
-    function renderPkgMfgTable() {
-      document.getElementById('pkgMfgLoading').style.display = 'none';
-      var hasAny = false;
-      var tbody = document.getElementById('pkgMfgList');
-      tbody.innerHTML = '';
-      PKG_ITEMS.forEach(function(item, idx) {
-        var mQty = getPkgQty(item, 'M');
-        if (mQty <= 0) return;
-        hasAny = true;
-        var tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td style="text-align:left; padding-left:15px;"><strong>' + item + '</strong></td>' +
-          '<td class="pkg-stock-has">' + mQty + ' 個</td>' +
-          '<td><input type="number" id="pkgMfgQty_' + idx + '" class="pkg-qty-input" min="0" max="' + mQty + '" value="0"></td>' +
-          '<td><select id="pkgMfgDest_' + idx + '" style="padding:6px;">' +
-            '<option value="VC">大陸廠商寄庫</option>' +
-            '<option value="VT">台灣廠商寄庫</option>' +
-            '<option value="S">水源寄庫</option>' +
-          '</select></td>' +
-          '<td><button class="btn-green" style="font-size:13px; padding:6px 12px; margin:0;" onclick="completeMfgItem(' + idx + ', \'' + item.replace(/'/g, "\\'") + '\')">✅ 完成入庫</button></td>';
-        tbody.appendChild(tr);
-      });
-      if (hasAny) {
-        document.getElementById('pkgMfgTable').style.display = 'table';
-        document.getElementById('pkgMfgEmpty').style.display = 'none';
-      } else {
-        document.getElementById('pkgMfgTable').style.display = 'none';
-        document.getElementById('pkgMfgEmpty').style.display = 'block';
+        if (hasSelected) {
+          if (isPickup) {
+            shippingFee = 0;
+            shippingType = "(門市自取免運)";
+          } else {
+            var addr = document.getElementById("cAddress").value;
+            var islands = ["澎湖", "金門", "馬祖", "連江", "綠島", "蘭嶼", "琉球"];
+            var isIsland = islands.some(function(keyword) { return addr.includes(keyword); });
+            if (isIsland) { shippingFee = 260; shippingType = "(離島運費)"; }
+            else { shippingFee = 160; shippingType = "(本島運費)"; }
+          }
+        }
+
+        var finalTotal = productTotal + shippingFee;
+        var displayDiv = document.getElementById('totalDisplay');
+        if (hasSelected) {
+          displayDiv.innerHTML = '<span class="price-detail">商品 ' + productTotal + ' + 運費 ' + shippingFee + '</span><br>總金額：' + finalTotal;
+        } else {
+          displayDiv.innerHTML = '總金額：$0';
+        }
+        return { productTotal: productTotal, shippingFee: shippingFee, shippingType: shippingType, finalTotal: finalTotal, isPickup: isPickup };
       }
-    }
 
-    // 區塊 B：單項完成製作
-    function completeMfgItem(idx, itemName) {
-      var qty = parseInt(document.getElementById('pkgMfgQty_' + idx).value, 10);
-      var dest = document.getElementById('pkgMfgDest_' + idx).value;
-      if (!qty || qty <= 0) return showToast('請輸入大於 0 的完成數量！', 'error');
-      var destName = PKG_LOC_NAMES[dest] || dest;
-      google.script.run
-        .withSuccessHandler(function() {
-          showToast('✅ ' + itemName + ' 已入庫至' + destName + '！');
-          refreshPkgTables();
+      // ===== 送出表單（核心改動：google.script.run → fetch） =====
+      function submitForm() {
+        var plans = [];
+        document.querySelectorAll('input[name^="plan"]:checked').forEach(function(el) { plans.push(el.value); });
+        if (plans.length === 0) { alert("請至少選擇一個試吃方案！"); return; }
+
+        var calcResult = calcTotal();
+        var paymentMethod = document.getElementById('paymentMethod').value;
+        var last5 = document.getElementById("last5").value;
+        if (paymentMethod === '匯款轉帳' && last5.length < 5) { alert("請輸入完整的匯款後五碼！"); return; }
+
+        var phone = document.getElementById("cPhone").value;
+        if (phone.length !== 10) { alert("手機號碼格式錯誤！請填寫 10 碼數字"); return; }
+
+        var data = {
+          userId: currentUserId,
+          lineName: document.getElementById("lineNameField").value || "",
+          plan1: document.querySelector('input[name="plan1"]').checked ? document.querySelector('input[name="plan1"]').value : "",
+          plan2: document.querySelector('input[name="plan2"]').checked ? document.querySelector('input[name="plan2"]').value : "",
+          plan3: document.querySelector('input[name="plan3"]').checked ? document.querySelector('input[name="plan3"]').value : "",
+          plan4: document.querySelector('input[name="plan4"]').checked ? document.querySelector('input[name="plan4"]').value : "",
+          cName: document.getElementById("cName").value,
+          cPhone: document.getElementById("cPhone").value,
+          cTaxId: document.getElementById("cTaxId").value,
+          cAddress: calcResult.isPickup ? "門市自取" : document.getElementById("cAddress").value,
+          cDate: document.getElementById("cDate").value,
+          totalAmount: calcResult.finalTotal,
+          last5: last5,
+          deliveryMethod: calcResult.isPickup ? "門市取貨" : "宅配寄送",
+          paymentMethod: paymentMethod
+        };
+
+        var btn = document.getElementById("sBtn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader"></span> 處理中...';
+
+        // 組裝訂單文字
+        var planText = plans.join("\n   ");
+        var paymentInfo = data.paymentMethod === '匯款轉帳'
+          ? ' 付款方式：匯款轉帳\n 帳號後五碼：' + data.last5 + '\n'
+          : ' 付款方式：' + data.paymentMethod + '\n';
+
+        var finalText =
+          '【彌月試吃申請】\n' +
+          '-------------------\n' +
+          ' 姓名：' + data.cName + '\n' +
+          ' 電話：' + data.cPhone + '\n' +
+          ' 統編：' + (data.cTaxId || "無") + '\n' +
+          ' 配送：' + data.deliveryMethod + '\n' +
+          ' 地址：' + (data.deliveryMethod === '門市取貨' ? '門市自取' : data.cAddress) + '\n' +
+          ' 出貨日期：' + data.cDate + '\n' +
+          paymentInfo +
+          '-------------------\n' +
+          ' 申請方案：\n   ' + planText + '\n' +
+          ' 總金額：' + data.totalAmount + '\n' +
+          '-------------------\n' +
+          '申請資料確認無誤，請協助安排！';
+
+        document.getElementById("copyArea").value = finalText;
+
+        // ★★★ 改動重點：用 fetch() 呼叫 GAS Web App API ★★★
+        // 注意：Content-Type 必須用 text/plain 避免觸發 CORS preflight
+        // GAS 會做 302 重導向，用 response.text() 再手動 parse 比較穩定
+        fetch(GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          redirect: 'follow',
+          body: JSON.stringify(data)
         })
-        .withFailureHandler(function(err) { showToast('入庫失敗: ' + err.message, 'error'); })
-        .completeManufacturing([{ item: itemName, qty: qty, destination: dest }]);
-    }
-
-    // 區塊 C：渲染廠商寄庫表格
-    function renderPkgVendorTable() {
-      document.getElementById('pkgVendorLoading').style.display = 'none';
-      var hasAny = false;
-      var tbody = document.getElementById('pkgVendorList');
-      tbody.innerHTML = '';
-      PKG_ITEMS.forEach(function(item, idx) {
-        var vcQty = getPkgQty(item, 'VC');
-        var vtQty = getPkgQty(item, 'VT');
-        if (vcQty <= 0 && vtQty <= 0) return;
-        hasAny = true;
-        var maxQty = Math.max(vcQty, vtQty);
-        var tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td style="text-align:left; padding-left:15px;"><strong>' + item + '</strong></td>' +
-          '<td class="' + (vcQty > 0 ? 'pkg-stock-has' : 'pkg-stock-zero') + '">' + vcQty + '</td>' +
-          '<td class="' + (vtQty > 0 ? 'pkg-stock-has' : 'pkg-stock-zero') + '">' + vtQty + '</td>' +
-          '<td><select id="pkgVSrc_' + idx + '" style="padding:6px;" onchange="updateVendorMax(' + idx + ', ' + vcQty + ', ' + vtQty + ')">' +
-            (vcQty > 0 ? '<option value="VC">大陸</option>' : '') +
-            (vtQty > 0 ? '<option value="VT">台灣</option>' : '') +
-          '</select></td>' +
-          '<td><input type="number" id="pkgVQty_' + idx + '" class="pkg-qty-input" min="0" max="' + (vcQty > 0 ? vcQty : vtQty) + '" value="0"></td>' +
-          '<td><select id="pkgVDest_' + idx + '" style="padding:6px;">' +
-            '<option value="S">轉至水源寄庫</option>' +
-            '<option value="X">回清水（消滅）</option>' +
-          '</select></td>' +
-          '<td><button class="btn-blue" style="font-size:13px; padding:6px 12px; margin:0;" onclick="transferVendorItem(' + idx + ', \'' + item.replace(/'/g, "\\'") + '\')">🚚 轉移</button></td>';
-        tbody.appendChild(tr);
-      });
-      if (hasAny) {
-        document.getElementById('pkgVendorTable').style.display = 'table';
-        document.getElementById('pkgVendorEmpty').style.display = 'none';
-      } else {
-        document.getElementById('pkgVendorTable').style.display = 'none';
-        document.getElementById('pkgVendorEmpty').style.display = 'block';
+        .then(function(response) { return response.text(); })
+        .then(function(text) {
+          var res;
+          try { res = JSON.parse(text); } catch(e) {
+            console.error("JSON parse error:", text);
+            throw new Error("伺服器回應格式錯誤");
+          }
+          if (res.status === "success") {
+            showSuccess(data, plans, calcResult);
+            autoSendOrder(finalText, data.paymentMethod);
+          } else {
+            alert(res.msg || "送出失敗，請稍後再試");
+            btn.disabled = false;
+            btn.innerText = "送出申請";
+          }
+        })
+        .catch(function(err) {
+          console.error("API Error:", err);
+          alert("發生錯誤：" + err.message + "\n請稍後再試");
+          btn.disabled = false;
+          btn.innerText = "送出申請";
+        });
       }
-    }
 
-    // 更新廠商寄庫轉移的數量上限
-    function updateVendorMax(idx, vcQty, vtQty) {
-      var src = document.getElementById('pkgVSrc_' + idx).value;
-      var input = document.getElementById('pkgVQty_' + idx);
-      var max = (src === 'VC') ? vcQty : vtQty;
-      input.max = max;
-      if (parseInt(input.value) > max) input.value = max;
-    }
+      // ===== 顯示成功畫面 =====
+      function showSuccess(data, plans, calcResult) {
+        document.getElementById("mainBanner").classList.add("hide");
+        document.getElementById("formView").classList.add("hide");
+        document.getElementById("successView").classList.remove("hide");
 
-    // 區塊 C：單項轉移
-    function transferVendorItem(idx, itemName) {
-      var src = document.getElementById('pkgVSrc_' + idx).value;
-      var qty = parseInt(document.getElementById('pkgVQty_' + idx).value, 10);
-      var dest = document.getElementById('pkgVDest_' + idx).value;
-      if (!qty || qty <= 0) return showToast('請輸入大於 0 的轉移數量！', 'error');
-      var destName = dest === 'S' ? '水源寄庫' : '清水（消滅）';
-      google.script.run
-        .withSuccessHandler(function() {
-          showToast('✅ ' + itemName + ' 已從' + PKG_LOC_NAMES[src] + '轉至' + destName + '！');
-          refreshPkgTables();
-        })
-        .withFailureHandler(function(err) { showToast('轉移失敗: ' + err.message, 'error'); })
-        .transferFromVendor([{ item: itemName, qty: qty, source: src, destination: dest }]);
-    }
+        if (data.paymentMethod === 'LINE PAY') {
+          document.getElementById("successLinePayArea").style.display = "block";
+        } else {
+          document.getElementById("successLinePayArea").style.display = "none";
+        }
 
-    // 區塊 D：渲染水源寄庫表格
-    function renderPkgShuiyuanTable() {
-      document.getElementById('pkgShuiyuanLoading').style.display = 'none';
-      var hasAny = false;
-      var tbody = document.getElementById('pkgShuiyuanList');
-      tbody.innerHTML = '';
-      PKG_ITEMS.forEach(function(item, idx) {
-        var sQty = getPkgQty(item, 'S');
-        if (sQty <= 0) return;
-        hasAny = true;
-        var tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td style="text-align:left; padding-left:15px;"><strong>' + item + '</strong></td>' +
-          '<td class="pkg-stock-has">' + sQty + ' 個</td>' +
-          '<td><input type="number" id="pkgSQty_' + idx + '" class="pkg-qty-input" min="0" max="' + sQty + '" value="0"></td>' +
-          '<td><button class="btn-red" style="font-size:13px; padding:6px 12px; margin:0;" onclick="consumeShuiyuanItem(' + idx + ', \'' + item.replace(/'/g, "\\'") + '\')">🏠 回清水</button></td>';
-        tbody.appendChild(tr);
-      });
-      if (hasAny) {
-        document.getElementById('pkgShuiyuanTable').style.display = 'table';
-        document.getElementById('pkgShuiyuanEmpty').style.display = 'none';
-      } else {
-        document.getElementById('pkgShuiyuanTable').style.display = 'none';
-        document.getElementById('pkgShuiyuanEmpty').style.display = 'block';
+        var plansHtml = plans.map(function(p) { return '<div>• ' + p + '</div>'; }).join('');
+        var summaryHtml =
+          '<div class="summary-title">📋 申請資料確認</div>' +
+          '<div class="summary-row"><span>姓名</span><span>' + data.cName + '</span></div>' +
+          '<div class="summary-row"><span>電話</span><span>' + data.cPhone + '</span></div>' +
+          '<div class="summary-row"><span>配送</span><span class="badge">' + data.deliveryMethod + '</span></div>' +
+          '<div class="summary-row"><span>地址</span><span>' + data.cAddress + '</span></div>' +
+          '<div class="summary-row"><span>出貨日期</span><span>' + data.cDate + '</span></div>' +
+          '<div style="margin: 10px 0; border-top:1px dashed #eee; padding-top:5px; font-size:13px; color:#666;">' +
+            plansHtml +
+          '</div>' +
+          '<div class="summary-total">' +
+            '總金額：' + data.totalAmount +
+            '<div style="font-size:12px; color:#888; font-weight:normal;">(' + data.paymentMethod + ')</div>' +
+          '</div>';
+        document.getElementById("summaryBox").innerHTML = summaryHtml;
+        window.scrollTo(0, 0);
       }
-    }
 
-    // 區塊 D：單項回清水
-    function consumeShuiyuanItem(idx, itemName) {
-      var qty = parseInt(document.getElementById('pkgSQty_' + idx).value, 10);
-      if (!qty || qty <= 0) return showToast('請輸入大於 0 的回清水數量！', 'error');
-      google.script.run
-        .withSuccessHandler(function() {
-          showToast('✅ ' + itemName + ' 已從水源寄庫回清水（消滅）！');
-          refreshPkgTables();
-        })
-        .withFailureHandler(function(err) { showToast('操作失敗: ' + err.message, 'error'); })
-        .consumeFromShuiyuan([{ item: itemName, qty: qty }]);
-    }
-  </script>
-</body>
+      // ===== 自動發送訂單到 LINE 聊天室（核心修復） =====
+      // ★ 脫離 GAS iframe 後，liff.isInClient() 能正確偵測 LINE 環境
+      function autoSendOrder(orderText, paymentMethod) {
+        var copyStatusMsg = document.getElementById("copyStatusMsg");
+        var manualCopyBox = document.getElementById("manualCopyBox");
+        var goToLineArea = document.getElementById("goToLineArea");
+
+        // 在 LINE App 內開啟時才能用 sendMessages
+        if (typeof liff !== 'undefined' && liff.isInClient()) {
+          liff.sendMessages([{
+            type: 'text',
+            text: orderText
+          }])
+          .then(function() {
+            // ✅ LIFF 自動發送成功
+            manualCopyBox.style.display = "none";
+
+            if (paymentMethod === 'LINE PAY') {
+              copyStatusMsg.innerHTML =
+                '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已自動傳送至聊天室！</span><br>' +
+                '<span style="color:#d63031; font-size:14px;">請完成下方 LINE PAY 付款後，截圖回傳即可</span>';
+              var reminder = document.getElementById("linePayReminder");
+              if (reminder) {
+                reminder.innerHTML =
+                  '⚠️付款完成後，請【截圖付款成功畫面】回傳給小幫手確認即可！<br>' +
+                  '（訂單明細已自動傳送，無需再手動貼上）';
+              }
+              goToLineArea.style.display = "none";
+            } else {
+              copyStatusMsg.innerHTML =
+                '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已自動傳送至聊天室！</span><br>' +
+                '<span style="color:#888; font-size:14px;">無需手動複製，系統已為您完成</span>';
+              goToLineArea.style.display = "none";
+            }
+
+            // ★ 可選：發送成功後 2 秒自動關閉 LIFF 視窗，取消註解即可啟用
+            // setTimeout(function() { liff.closeWindow(); }, 2000);
+          })
+          .catch(function(err) {
+            console.error('LIFF sendMessages error:', err);
+            // 發送失敗，退回剪貼簿複製流程
+            autoCopyOrder();
+          });
+        } else {
+          // 不在 LINE 內（外部瀏覽器），使用剪貼簿複製流程
+          autoCopyOrder();
+        }
+      }
+
+      // ===== 自動複製到剪貼簿（fallback） =====
+      function autoCopyOrder() {
+        var area = document.getElementById("copyArea");
+        navigator.clipboard.writeText(area.value).then(function() {
+          document.getElementById("copyStatusMsg").innerHTML =
+            '<span style="color:#28a745;">✅ 訂單內容已自動複製！</span><br>' +
+            '<span style="color:#d63031; font-size:14px;">請點擊下方按鈕，前往 LINE 貼上回傳<br>⚠ 請勿以截圖的方式傳送⚠ </span>';
+        }).catch(function() {
+          document.getElementById("copyStatusMsg").innerHTML =
+            '<span style="color:#e67e22;">⚠️無法自動複製，請手動複製</span>';
+          document.getElementById("manualCopyBox").style.display = "block";
+        });
+      }
+
+      // ===== 手動複製按鈕 =====
+      function manualCopy() {
+        var area = document.getElementById("copyArea");
+        navigator.clipboard.writeText(area.value).then(function() {
+          document.getElementById("copyStatusMsg").innerHTML =
+            '<span style="color:#28a745;">✅ 訂單內容已複製！</span><br>' +
+            '<span style="color:#d63031; font-size:14px;">請點擊下方按鈕，前往 LINE 貼上回傳<br>⚠ 請勿以截圖的方式傳送⚠ </span>';
+          document.getElementById("manualCopyBox").style.display = "none";
+        }).catch(function() {
+          alert("⚠️複製失敗，請長按訂單內容手動複製後，前往 LINE 貼上");
+        });
+      }
+    </script>
+  </body>
 </html>
