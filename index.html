@@ -223,8 +223,6 @@
                 if (field) field.value = currentUserId;
                 var nameField = document.getElementById("lineNameField");
                 if (nameField) nameField.value = profile.displayName;
-                var cNameInput = document.getElementById("cName");
-                if (cNameInput && !cNameInput.value) { cNameInput.value = profile.displayName; }
               });
             } else {
               console.log("Web Mode - 外部瀏覽器開啟");
