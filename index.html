@@ -114,6 +114,9 @@
         <div id="festivalErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:5px; border:1px solid #fc8181;">
           🧨 2/15 ~ 2/22 春節休假期間暫停出貨/取貨
         </div>
+        <div id="blockedDateMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:5px; border:1px solid #fc8181;">
+          🚫 4/3 ~ 4/6 清明連假期間暫停出貨/取貨，請改選其他日期
+        </div>
         <div id="pickupOnlyMsg" style="display:none; color:#d63031; font-weight:bold; font-size:14px; margin-top:5px; animation: pulse 1.5s infinite;">
           ⚠️ 2/13、2/14 因節日貨量大，僅限「門市自取」
         </div>
@@ -254,9 +257,12 @@
         var lblShip = document.getElementById('lblShip');
         var radioPickup = document.querySelector('input[value="門市取貨"]');
 
+        var blockedMsg = document.getElementById("blockedDateMsg");
+
         errorMsg.style.display = "none";
         sundayMsg.style.display = "none";
         festivalMsg.style.display = "none";
+        blockedMsg.style.display = "none";
         pickupMsg.style.display = "none";
 
         if (!dateStr) {
@@ -281,6 +287,15 @@
         }
         if (month === 2 && day >= 15 && day <= 22) {
           festivalMsg.style.display = "block";
+          input.value = "";
+          if (navigator.vibrate) navigator.vibrate(200);
+          radioShip.disabled = false;
+          lblShip.style.opacity = "1";
+          lblShip.style.pointerEvents = "auto";
+          return;
+        }
+        if (year === 2026 && month === 4 && day >= 3 && day <= 6) {
+          blockedMsg.style.display = "block";
           input.value = "";
           if (navigator.vibrate) navigator.vibrate(200);
           radioShip.disabled = false;
