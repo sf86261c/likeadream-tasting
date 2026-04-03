@@ -548,60 +548,85 @@
         window.scrollTo(0, 0);
       }
 
-      // ===== 自動發送訂單到 LINE 聊天室（核心修復） =====
-      // ★ 脫離 GAS iframe 後，liff.isInClient() 能正確偵測 LINE 環境
-      // ★ clipboardOk 由 submitForm 在 fetch 前預先複製的結果傳入
+      // ===== 自動發送訂單到 LINE（三層保險） =====
       function autoSendOrder(orderText, paymentMethod, clipboardOk) {
         var copyStatusMsg = document.getElementById("copyStatusMsg");
         var manualCopyBox = document.getElementById("manualCopyBox");
         var goToLineArea = document.getElementById("goToLineArea");
 
-        // 在 LINE App 內開啟時才能用 sendMessages
-        if (typeof liff !== 'undefined' && liff.isInClient()) {
-          liff.sendMessages([{
-            type: 'text',
-            text: orderText
-          }])
-          .then(function() {
-            manualCopyBox.style.display = "none";
-
-            if (paymentMethod === 'LINE PAY') {
-              copyStatusMsg.innerHTML =
-                '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已自動傳送至聊天室！</span><br>' +
-                '<span style="color:#d63031; font-size:14px;">請完成下方 LINE PAY 付款後，截圖回傳即可</span>';
-              var reminder = document.getElementById("linePayReminder");
-              if (reminder) {
-                reminder.innerHTML =
-                  '⚠️付款完成後，請【截圖付款成功畫面】回傳給小幫手確認即可！<br>' +
-                  '（訂單明細已自動傳送，無需再手動貼上）';
-              }
-              goToLineArea.style.display = "none";
-            } else {
-              copyStatusMsg.innerHTML =
-                '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已自動傳送至聊天室！</span><br>' +
-                '<span style="color:#888; font-size:14px;">無需手動複製，系統已為您完成</span>';
-              goToLineArea.style.display = "none";
-            }
-          })
-          .catch(function(err) {
-            console.error('LIFF sendMessages error:', err);
-            // sendMessages 失敗，使用預先複製的結果
-            showCopyResult(clipboardOk);
-          });
-        } else {
-          // 不在 LINE 內（外部瀏覽器），使用預先複製的結果
+        if (typeof liff === 'undefined') {
           showCopyResult(clipboardOk);
+          return;
         }
+
+        // ===== 第一層：sendMessages（全自動，需要聊天室上下文） =====
+        function trySendMessages() {
+          if (!liff.isInClient()) {
+            trySharePicker();
+            return;
+          }
+          liff.sendMessages([{ type: 'text', text: orderText }])
+            .then(function() {
+              manualCopyBox.style.display = "none";
+              goToLineArea.style.display = "none";
+              if (paymentMethod === 'LINE PAY') {
+                copyStatusMsg.innerHTML =
+                  '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已自動傳送至聊天室！</span><br>' +
+                  '<span style="color:#d63031; font-size:14px;">請完成下方 LINE PAY 付款後，截圖回傳即可</span>';
+                var reminder = document.getElementById("linePayReminder");
+                if (reminder) {
+                  reminder.innerHTML =
+                    '⚠️付款完成後，請【截圖付款成功畫面】回傳給小幫手確認即可！<br>（訂單明細已自動傳送，無需再手動貼上）';
+                }
+              } else {
+                copyStatusMsg.innerHTML =
+                  '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已自動傳送至聊天室！</span><br>' +
+                  '<span style="color:#888; font-size:14px;">無需手動複製，系統已為您完成</span>';
+              }
+            })
+            .catch(function(err) {
+              console.error('sendMessages failed:', err);
+              trySharePicker();
+            });
+        }
+
+        // ===== 第二層：shareTargetPicker（彈出分享視窗，不需聊天室上下文） =====
+        function trySharePicker() {
+          if (!liff.isApiAvailable('shareTargetPicker')) {
+            console.log('shareTargetPicker not available');
+            showCopyResult(clipboardOk);
+            return;
+          }
+          liff.shareTargetPicker([{ type: 'text', text: orderText }])
+            .then(function(res) {
+              if (res) {
+                manualCopyBox.style.display = "none";
+                goToLineArea.style.display = "none";
+                copyStatusMsg.innerHTML =
+                  '<span style="color:#28a745; font-size:18px;">✅ 訂單已成功分享！</span><br>' +
+                  '<span style="color:#888; font-size:14px;">訂單已傳送至您選擇的聊天室</span>';
+              } else {
+                // 使用者取消了分享
+                showCopyResult(clipboardOk);
+              }
+            })
+            .catch(function(err) {
+              console.error('shareTargetPicker failed:', err);
+              showCopyResult(clipboardOk);
+            });
+        }
+
+        // 開始嘗試
+        trySendMessages();
       }
 
-      // ===== 顯示複製結果（使用 fetch 前預先複製的狀態） =====
+      // ===== 第三層：顯示複製結果 =====
       function showCopyResult(clipboardOk) {
         if (clipboardOk) {
           document.getElementById("copyStatusMsg").innerHTML =
             '<span style="color:#28a745;">✅ 訂單內容已自動複製！</span><br>' +
             '<span style="color:#d63031; font-size:14px;">請點擊下方按鈕，前往 LINE 貼上回傳<br>⚠ 請勿以截圖的方式傳送⚠ </span>';
         } else {
-          // 預先複製也失敗，顯示手動複製按鈕
           document.getElementById("copyStatusMsg").innerHTML =
             '<span style="color:#e67e22;">⚠️請點下方按鈕複製訂單內容</span>';
           document.getElementById("manualCopyBox").style.display = "block";
