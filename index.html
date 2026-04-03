@@ -481,9 +481,14 @@
 
         document.getElementById("copyArea").value = finalText;
 
-        // ★★★ 改動重點：用 fetch() 呼叫 GAS Web App API ★★★
-        // 注意：Content-Type 必須用 text/plain 避免觸發 CORS preflight
-        // GAS 會做 302 重導向，用 response.text() 再手動 parse 比較穩定
+        // ★ 在 fetch 之前先複製到剪貼簿（此時仍在使用者點擊的手勢範圍內）
+        var clipboardOk = false;
+        navigator.clipboard.writeText(finalText).then(function() {
+          clipboardOk = true;
+        }).catch(function() {
+          clipboardOk = false;
+        });
+
         fetch(GAS_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -499,7 +504,7 @@
           }
           if (res.status === "success") {
             showSuccess(data, plans, calcResult);
-            autoSendOrder(finalText, data.paymentMethod);
+            autoSendOrder(finalText, data.paymentMethod, clipboardOk);
           } else {
             alert(res.msg || "送出失敗，請稍後再試");
             btn.disabled = false;
@@ -547,7 +552,8 @@
 
       // ===== 自動發送訂單到 LINE 聊天室（核心修復） =====
       // ★ 脫離 GAS iframe 後，liff.isInClient() 能正確偵測 LINE 環境
-      function autoSendOrder(orderText, paymentMethod) {
+      // ★ clipboardOk 由 submitForm 在 fetch 前預先複製的結果傳入
+      function autoSendOrder(orderText, paymentMethod, clipboardOk) {
         var copyStatusMsg = document.getElementById("copyStatusMsg");
         var manualCopyBox = document.getElementById("manualCopyBox");
         var goToLineArea = document.getElementById("goToLineArea");
@@ -559,7 +565,6 @@
             text: orderText
           }])
           .then(function() {
-            // ✅ LIFF 自動發送成功
             manualCopyBox.style.display = "none";
 
             if (paymentMethod === 'LINE PAY') {
@@ -579,33 +584,30 @@
                 '<span style="color:#888; font-size:14px;">無需手動複製，系統已為您完成</span>';
               goToLineArea.style.display = "none";
             }
-
-            // ★ 可選：發送成功後 2 秒自動關閉 LIFF 視窗，取消註解即可啟用
-            // setTimeout(function() { liff.closeWindow(); }, 2000);
           })
           .catch(function(err) {
             console.error('LIFF sendMessages error:', err);
-            // 發送失敗，退回剪貼簿複製流程
-            autoCopyOrder();
+            // sendMessages 失敗，使用預先複製的結果
+            showCopyResult(clipboardOk);
           });
         } else {
-          // 不在 LINE 內（外部瀏覽器），使用剪貼簿複製流程
-          autoCopyOrder();
+          // 不在 LINE 內（外部瀏覽器），使用預先複製的結果
+          showCopyResult(clipboardOk);
         }
       }
 
-      // ===== 自動複製到剪貼簿（fallback） =====
-      function autoCopyOrder() {
-        var area = document.getElementById("copyArea");
-        navigator.clipboard.writeText(area.value).then(function() {
+      // ===== 顯示複製結果（使用 fetch 前預先複製的狀態） =====
+      function showCopyResult(clipboardOk) {
+        if (clipboardOk) {
           document.getElementById("copyStatusMsg").innerHTML =
             '<span style="color:#28a745;">✅ 訂單內容已自動複製！</span><br>' +
             '<span style="color:#d63031; font-size:14px;">請點擊下方按鈕，前往 LINE 貼上回傳<br>⚠ 請勿以截圖的方式傳送⚠ </span>';
-        }).catch(function() {
+        } else {
+          // 預先複製也失敗，顯示手動複製按鈕
           document.getElementById("copyStatusMsg").innerHTML =
-            '<span style="color:#e67e22;">⚠️無法自動複製，請手動複製</span>';
+            '<span style="color:#e67e22;">⚠️請點下方按鈕複製訂單內容</span>';
           document.getElementById("manualCopyBox").style.display = "block";
-        });
+        }
       }
 
       // ===== 手動複製按鈕 =====
