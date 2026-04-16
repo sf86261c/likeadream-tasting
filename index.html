@@ -477,7 +477,7 @@
           ' 申請方案：\n   ' + planText + '\n' +
           ' 總金額：' + data.totalAmount + '\n' +
           '-------------------\n' +
-          '申請資料確認無誤，請協助安排！';
+          (data.paymentMethod === '匯款轉帳' || data.paymentMethod === 'LINE PAY' ? '稍後補上匯款截圖，請協助安排!' : '申請資料確認無誤，請協助安排！');
 
         document.getElementById("copyArea").value = finalText;
 
