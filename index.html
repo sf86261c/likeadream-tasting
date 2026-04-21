@@ -59,9 +59,6 @@
     <div class="container" id="formView" style="display:block;">
       <div id="liffStatus" style="font-size:12px; color:#ccc; text-align:center; margin-bottom:5px;">Loading...</div>
       <h2>🍰 LikeaDream彌月試吃申請</h2>
-      <button type="button" onclick="diagnoseLiff()" style="width:100%; padding:10px; background:#fff3cd; border:2px dashed #856404; border-radius:8px; color:#856404; font-weight:bold; font-size:14px; margin-bottom:15px; cursor:pointer;">
-        🔍 LIFF 診斷（測試完可移除）
-      </button>
       <form id="tastingForm" onsubmit="event.preventDefault(); submitForm()">
         <input type="hidden" id="userIdField" name="userId">
         <input type="hidden" id="lineNameField" name="lineName">
@@ -238,119 +235,6 @@
             console.error("LIFF Init Error:", err);
             document.getElementById("liffStatus").innerText = "初始化失敗，但仍可填寫";
           });
-      }
-
-      // ===== LIFF 診斷工具（測試用，完成後可移除） =====
-      function diagnoseLiff() {
-        var lines = [];
-        lines.push('=== LIFF 診斷報告 ===');
-        lines.push('LIFF ID: 2008790381-8Lkh37NS');
-        lines.push('時間: ' + new Date().toLocaleString());
-        lines.push('');
-
-        if (typeof liff === 'undefined') {
-          lines.push('❌ LIFF SDK 未載入');
-          showDiag(lines);
-          return;
-        }
-
-        try {
-          lines.push('【基本狀態】');
-          lines.push('isInClient: ' + liff.isInClient());
-          lines.push('isLoggedIn: ' + liff.isLoggedIn());
-          lines.push('OS: ' + liff.getOS());
-          lines.push('LineVersion: ' + (liff.getLineVersion() || '外部瀏覽器'));
-          lines.push('Language: ' + liff.getLanguage());
-          lines.push('');
-
-          lines.push('【聊天室上下文】');
-          var ctx = liff.getContext();
-          if (ctx) {
-            lines.push('type: ' + ctx.type);
-            lines.push('  (utou=1對1, group=群組, room=多人, external=外部, none=無)');
-            if (ctx.utouId) lines.push('utouId: ' + ctx.utouId.substring(0, 10) + '...');
-            if (ctx.groupId) lines.push('groupId: ' + ctx.groupId.substring(0, 10) + '...');
-            if (ctx.roomId) lines.push('roomId: ' + ctx.roomId.substring(0, 10) + '...');
-            if (ctx.userId) lines.push('userId: ' + ctx.userId.substring(0, 10) + '...');
-          } else {
-            lines.push('context: null（無聊天室上下文！）');
-          }
-          lines.push('');
-
-          lines.push('【權限檢查】');
-          var permCheck = null;
-          try {
-            if (liff.permission && liff.permission.query) {
-              permCheck = liff.permission.query('chat_message.write');
-            }
-          } catch (e) {
-            lines.push('permission.query 不支援: ' + e.message);
-          }
-
-          var finishAndSend = function() {
-            lines.push('');
-            lines.push('【測試 sendMessages】');
-            if (!liff.isInClient()) {
-              lines.push('⛔ 不在 LINE 內（外部瀏覽器），sendMessages 不會啟用');
-              showDiag(lines);
-              return;
-            }
-            liff.sendMessages([{ type: 'text', text: '【診斷測試訊息，請忽略】' }])
-              .then(function() {
-                lines.push('✅ sendMessages 成功！訊息已送出');
-                showDiag(lines);
-              })
-              .catch(function(err) {
-                lines.push('❌ sendMessages 失敗');
-                lines.push('  code: ' + (err.code || 'N/A'));
-                lines.push('  message: ' + (err.message || String(err)));
-                lines.push('  完整錯誤: ' + JSON.stringify(err, Object.getOwnPropertyNames(err)));
-                showDiag(lines);
-              });
-          };
-
-          if (permCheck && permCheck.then) {
-            permCheck.then(function(r) {
-              lines.push('chat_message.write: ' + JSON.stringify(r));
-              finishAndSend();
-            }).catch(function(e) {
-              lines.push('chat_message.write 查詢失敗: ' + e.message);
-              finishAndSend();
-            });
-          } else {
-            lines.push('(此 SDK 版本無法查詢權限狀態)');
-            finishAndSend();
-          }
-        } catch (e) {
-          lines.push('診斷錯誤: ' + e.message);
-          showDiag(lines);
-        }
-      }
-
-      function showDiag(lines) {
-        var text = lines.join('\n');
-        console.log(text);
-        // 同時建立畫面上的面板，方便截圖
-        var panel = document.getElementById('diagPanel');
-        if (!panel) {
-          panel = document.createElement('div');
-          panel.id = 'diagPanel';
-          panel.style.cssText = 'background:#fffbe6; border:2px solid #f0c000; border-radius:8px; padding:12px; margin:10px 0; white-space:pre-wrap; font-family:monospace; font-size:12px; color:#333; line-height:1.5; word-break:break-all;';
-          var btn = document.querySelector('button[onclick="diagnoseLiff()"]');
-          if (btn) btn.parentNode.insertBefore(panel, btn.nextSibling);
-        }
-        panel.textContent = text;
-        // 也嘗試複製到剪貼簿，方便貼給助理
-        try {
-          var ta = document.createElement('textarea');
-          ta.value = text;
-          ta.style.position = 'fixed';
-          ta.style.left = '-9999px';
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-        } catch (e) {}
       }
 
       // ===== 複製銀行帳號 =====
