@@ -54,7 +54,7 @@
   </head>
   <body>
     <div class="banner-container" id="mainBanner">
-      <img src="https://i.ibb.co/7xCpKKQp/image.png" class="banner-img" alt="試吃方案說明">
+      <img src="https://i.ibb.co/4wxW7WNp/9.png" class="banner-img" alt="試吃方案說明">
     </div>
     <div class="container" id="formView" style="display:block;">
       <div id="liffStatus" style="font-size:12px; color:#ccc; text-align:center; margin-bottom:5px;">Loading...</div>
@@ -67,8 +67,7 @@
         <div class="plan-group">
           <label class="plan-item"><input type="checkbox" name="plan1" value="方案一：蜂蜜蛋糕" data-price="300" onchange="calcTotal()"><span class="plan-text"><span>方案一：蜂蜜蛋糕</span> <span class="price-tag">$300</span></span></label>
           <label class="plan-item"><input type="checkbox" name="plan2" value="方案二：曲奇餅乾" data-price="200" onchange="calcTotal()"><span class="plan-text"><span>方案二：曲奇餅乾</span> <span class="price-tag">$200</span></span></label>
-          <label class="plan-item"><input type="checkbox" name="plan3" value="方案三：蜂蜜蛋糕+曲奇" data-price="500" onchange="calcTotal()"><span class="plan-text"><span>方案三：蜂蜜蛋糕+曲奇</span> <span class="price-tag">$500</span></span></label>
-          <label class="plan-item"><input type="checkbox" name="plan4" value="方案四：Dreamy旋轉筒" data-price="350" onchange="calcTotal()"><span class="plan-text"><span>方案四：Dreamy旋轉筒</span> <span class="price-tag">$350</span></span></label>
+          <label class="plan-item"><input type="checkbox" name="plan3" value="方案三：Dreamy旋轉筒" data-price="350" onchange="calcTotal()"><span class="plan-text"><span>方案三：Dreamy旋轉筒</span> <span class="price-tag">$350</span></span></label>
         </div>
 
         <label class="required">訂購姓名</label>
@@ -441,7 +440,6 @@
           plan1: document.querySelector('input[name="plan1"]').checked ? document.querySelector('input[name="plan1"]').value : "",
           plan2: document.querySelector('input[name="plan2"]').checked ? document.querySelector('input[name="plan2"]').value : "",
           plan3: document.querySelector('input[name="plan3"]').checked ? document.querySelector('input[name="plan3"]').value : "",
-          plan4: document.querySelector('input[name="plan4"]').checked ? document.querySelector('input[name="plan4"]').value : "",
           cName: document.getElementById("cName").value,
           cPhone: document.getElementById("cPhone").value,
           cTaxId: document.getElementById("cTaxId").value,
