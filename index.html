@@ -519,7 +519,7 @@
         .catch(function() { return { status: 0, body: null }; })
         .then(function(res) {
           if (res.status === 409) {
-            alert("您已申請過試吃囉，如需修改請直接在聊天室留言 😊");
+            alert("您的申請已在出貨安排中，如需調整請直接在聊天室留言 😊");
             btn.disabled = false; btn.innerText = "送出申請";
             return;
           }
