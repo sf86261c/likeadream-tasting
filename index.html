@@ -242,14 +242,20 @@
       }
 
       // Q4-A：外部瀏覽器（取不到 LINE 身分）一律擋下，避免無法寫入申請正本
+      // 注意：liffStatus 在 formView 內，不可隱藏 formView（會連提示一起藏），只藏表單本體
       function showWebBlocked() {
         var banner = document.getElementById("mainBanner");
         if (banner) banner.classList.add("hide");
-        var form = document.getElementById("formView");
-        if (form) form.classList.add("hide");
+        var form = document.getElementById("tastingForm");
+        if (form) form.style.display = "none";
         var st = document.getElementById("liffStatus");
         if (st) {
           st.style.display = "block";
+          st.style.fontSize = "16px";
+          st.style.color = "#b5651d";
+          st.style.fontWeight = "bold";
+          st.style.padding = "40px 12px";
+          st.style.lineHeight = "1.8";
           st.innerText = "此表單請從 LINE 聊天室點擊連結開啟填寫 🙏";
         }
       }
