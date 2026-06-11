@@ -200,6 +200,7 @@
 
     <script>
       var GAS_API_URL = "https://script.google.com/macros/s/AKfycbw0qvdCYE4bRJ1V9R1nmdl95GBveMp6fNzH2unNDK1PGfkp-PKzKsGXnHMciUaG9lTKDA/exec";
+      var APPLICATIONS_API = "https://likeadreamcastella.zeabur.app/api/applications";
 
       var currentUserId = "";
 
@@ -218,6 +219,10 @@
         liff.init({ liffId: myLiffId })
           .then(function() {
             document.getElementById("liffStatus").style.display = "none";
+            if (!liff.isInClient()) {
+              showWebBlocked();
+              return;
+            }
             if (liff.isLoggedIn()) {
               liff.getProfile().then(function(profile) {
                 currentUserId = profile.userId;
@@ -227,13 +232,26 @@
                 if (nameField) nameField.value = profile.displayName;
               });
             } else {
-              console.log("Web Mode - 外部瀏覽器開啟");
+              showWebBlocked();
             }
           })
           .catch(function(err) {
             console.error("LIFF Init Error:", err);
-            document.getElementById("liffStatus").innerText = "初始化失敗，但仍可填寫";
+            showWebBlocked();
           });
+      }
+
+      // Q4-A：外部瀏覽器（取不到 LINE 身分）一律擋下，避免無法寫入申請正本
+      function showWebBlocked() {
+        var banner = document.getElementById("mainBanner");
+        if (banner) banner.classList.add("hide");
+        var form = document.getElementById("formView");
+        if (form) form.classList.add("hide");
+        var st = document.getElementById("liffStatus");
+        if (st) {
+          st.style.display = "block";
+          st.innerText = "此表單請從 LINE 聊天室點擊連結開啟填寫 🙏";
+        }
       }
 
       // ===== 複製銀行帳號 =====
@@ -455,64 +473,92 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="loader"></span> 處理中...';
 
-        // 組裝訂單文字
+        // 組裝訂單文字（buildFinalText(null) 為剪貼簿後備版——複製須在點擊手勢內，等不到編號）
         var planText = plans.join("\n   ");
         var paymentInfo = data.paymentMethod === '匯款轉帳'
           ? ' 付款方式：匯款轉帳\n 帳號後五碼：' + data.last5 + '\n'
           : ' 付款方式：' + data.paymentMethod + '\n';
 
-        var finalText =
-          '【彌月試吃申請】\n' +
-          '-------------------\n' +
-          ' 姓名：' + data.cName + '\n' +
-          ' 電話：' + data.cPhone + '\n' +
-          ' 統編：' + (data.cTaxId || "無") + '\n' +
-          ' 配送：' + data.deliveryMethod + '\n' +
-          ' 地址：' + (data.deliveryMethod === '門市取貨' ? '門市自取' : data.cAddress) + '\n' +
-          ' 出貨日期：' + data.cDate + '\n' +
-          paymentInfo +
-          '-------------------\n' +
-          ' 申請方案：\n   ' + planText + '\n' +
-          ' 總金額：' + data.totalAmount + '\n' +
-          '-------------------\n' +
-          (data.paymentMethod === '匯款轉帳' || data.paymentMethod === 'LINE PAY' ? '稍後補上匯款截圖，請協助安排!' : '申請資料確認無誤，請協助安排！');
-
-        document.getElementById("copyArea").value = finalText;
-
-        // ★ 在 fetch 之前先複製（此時仍在使用者點擊的手勢範圍內）
-        var clipboardOk = fallbackCopy(finalText);
-        if (!clipboardOk) {
-          try { navigator.clipboard.writeText(finalText).then(function() { clipboardOk = true; }).catch(function() {}); } catch(e) {}
+        function buildFinalText(applicationNo) {
+          return (applicationNo ? '【試吃申請】編號 ' + applicationNo : '【試吃申請】') + '\n' +
+            '-------------------\n' +
+            ' 姓名：' + data.cName + '\n' +
+            ' 電話：' + data.cPhone + '\n' +
+            ' 統編：' + (data.cTaxId || "無") + '\n' +
+            ' 配送：' + data.deliveryMethod + '\n' +
+            ' 地址：' + (data.deliveryMethod === '門市取貨' ? '門市自取' : data.cAddress) + '\n' +
+            ' 出貨日期：' + data.cDate + '\n' +
+            paymentInfo +
+            '-------------------\n' +
+            ' 申請方案：\n   ' + planText + '\n' +
+            ' 總金額：' + data.totalAmount + '\n' +
+            '-------------------\n' +
+            (data.paymentMethod === '匯款轉帳' || data.paymentMethod === 'LINE PAY' ? '稍後補上匯款截圖，請協助安排!' : '申請資料確認無誤，請協助安排！');
         }
 
-        fetch(GAS_API_URL, {
+        var fallbackText = buildFinalText(null);
+        document.getElementById("copyArea").value = fallbackText;
+        var clipboardOk = fallbackCopy(fallbackText);
+        if (!clipboardOk) {
+          try { navigator.clipboard.writeText(fallbackText).then(function() { clipboardOk = true; }).catch(function() {}); } catch(e) {}
+        }
+
+        // (a) 路：先寫入新系統申請正本（拿編號）；不可用時降級走 GAS 照舊
+        fetch(APPLICATIONS_API, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          redirect: 'follow',
           body: JSON.stringify(data)
         })
-        .then(function(response) { return response.text(); })
-        .then(function(text) {
-          var res;
-          try { res = JSON.parse(text); } catch(e) {
-            console.error("JSON parse error:", text);
-            throw new Error("伺服器回應格式錯誤");
+        .then(function(r) { return r.json().then(function(j) { return { status: r.status, body: j }; }); })
+        .catch(function() { return { status: 0, body: null }; })
+        .then(function(res) {
+          if (res.status === 409) {
+            alert("您已申請過試吃囉，如需修改請直接在聊天室留言 😊");
+            btn.disabled = false; btn.innerText = "送出申請";
+            return;
           }
-          if (res.status === "success") {
-            showSuccess(data, plans, calcResult);
-            autoSendOrder(finalText, data.paymentMethod, clipboardOk);
-          } else {
-            alert(res.msg || "送出失敗，請稍後再試");
+          if (res.status === 403) {
+            alert("此連結限本人使用");
+            btn.disabled = false; btn.innerText = "送出申請";
+            return;
+          }
+          var applicationNo = (res.status === 200 && res.body && res.body.application_no) ? res.body.application_no : null;
+          var finalText = buildFinalText(applicationNo);
+          document.getElementById("copyArea").value = finalText;
+          submitToGas(finalText);
+        });
+
+        // (c) 路：GAS 寫 Google Sheet 照舊（Q8-A），成功後 (b) 路 sendMessages
+        function submitToGas(finalText) {
+          fetch(GAS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            redirect: 'follow',
+            body: JSON.stringify(data)
+          })
+          .then(function(response) { return response.text(); })
+          .then(function(text) {
+            var res;
+            try { res = JSON.parse(text); } catch(e) {
+              console.error("JSON parse error:", text);
+              throw new Error("伺服器回應格式錯誤");
+            }
+            if (res.status === "success") {
+              showSuccess(data, plans, calcResult);
+              autoSendOrder(finalText, data.paymentMethod, clipboardOk);
+            } else {
+              alert(res.msg || "送出失敗，請稍後再試");
+              btn.disabled = false;
+              btn.innerText = "送出申請";
+            }
+          })
+          .catch(function(err) {
+            console.error("API Error:", err);
+            alert("發生錯誤：" + err.message + "\n請稍後再試");
             btn.disabled = false;
             btn.innerText = "送出申請";
-          }
-        })
-        .catch(function(err) {
-          console.error("API Error:", err);
-          alert("發生錯誤：" + err.message + "\n請稍後再試");
-          btn.disabled = false;
-          btn.innerText = "送出申請";
-        });
+          });
+        }
       }
 
       // ===== 顯示成功畫面 =====
