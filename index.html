@@ -427,7 +427,8 @@
             shippingType = "(門市自取免運)";
           } else {
             var addr = document.getElementById("cAddress").value;
-            var islands = ["澎湖", "金門", "馬祖", "連江", "綠島", "蘭嶼", "琉球"];
+            // 離島判定需含行政區後綴（縣/鄉），避免「新北市板橋區金門街」「馬祖新村」等路名/地名誤判
+            var islands = ["澎湖縣", "金門縣", "連江縣", "綠島鄉", "蘭嶼鄉", "琉球鄉", "小琉球"];
             var isIsland = islands.some(function(keyword) { return addr.includes(keyword); });
             if (isIsland) { shippingFee = 260; shippingType = "(離島運費)"; }
             else { shippingFee = 160; shippingType = "(本島運費)"; }
