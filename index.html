@@ -7,8 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <style>
-      :root { --primary: #d4a373; --text: #4a4a4a; --bg: #fdf5e6; --white: #ffffff; --success: #52b788; --line: #06c755; }
+      :root { --primary: #d4a373; --primary-dark: #b07c4a; --text: #4a4a4a; --bg: #fdf5e6; --white: #ffffff; --success: #52b788; --line: #06c755; }
       body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; color: var(--text); background: var(--bg); min-height: 100vh; }
       .container { max-width: 600px; margin: 0 auto; background: var(--white); padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); min-height: 500px; padding-bottom: 80px; }
       .banner-container { width: 100%; max-width: 600px; margin: 0 auto; background: #fff; position: relative; }
@@ -16,31 +17,51 @@
       h2 { text-align: center; color: #6b4f4f; margin: 10px 0 20px 0; font-size: 1.5rem; }
       label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #6b4f4f; }
       .required::after { content: " *"; color: #d63031; }
-      input[type="text"], input[type="tel"], input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; transition: 0.3s; }
-      input:focus, select:focus { outline: none; border-color: var(--primary); }
+      input[type="text"], input[type="tel"], input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 16px; background: #fff; transition: border-color .25s, box-shadow .25s, transform .25s; }
+      input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(212,163,115,.18); transform: translateY(-1px); }
       .plan-group { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; }
-      .plan-item { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-      .plan-item:hover { background: #fffbf5; border-color: var(--primary); }
-      .plan-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
+      .plan-item { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1.5px solid #eee; border-radius: 14px; cursor: pointer; transition: transform .25s cubic-bezier(.34,1.56,.64,1), border-color .2s, background .2s, box-shadow .25s; }
+      .plan-item:hover { background: #fffbf5; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 14px rgba(212,163,115,.18); }
+      .plan-item:active { transform: scale(.98); }
+      .plan-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); flex-shrink: 0; }
+      /* 選中回饋：卡片果凍彈跳 + 勾勾/價格 pop（改編自 21st.dev 微互動） */
+      .plan-item:has(input:checked) { border-color: var(--primary); background: #fffbf5; box-shadow: 0 4px 12px rgba(212,163,115,.22); animation: jellyBounce .5s cubic-bezier(.34,1.56,.64,1); }
+      .plan-item input[type="checkbox"]:checked { animation: popIn .35s cubic-bezier(.34,1.56,.64,1); }
+      .plan-item:has(input:checked) .price-tag { animation: popIn .45s cubic-bezier(.34,1.56,.64,1); }
+      @keyframes jellyBounce { 0% { transform: scale(1); } 30% { transform: scale(1.03, .96); } 55% { transform: scale(.98, 1.02); } 75% { transform: scale(1.01, .99); } 100% { transform: scale(1); } }
+      @keyframes popIn { 0% { transform: scale(.4); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
       .plan-text { font-size: 15px; line-height: 1.4; display: flex; justify-content: space-between; width: 100%; }
-      .price-tag { color: #d63031; font-weight: bold; }
+      .price-tag { color: #d63031; font-weight: bold; display: inline-block; }
       .radio-group { display: flex; gap: 15px; margin-top: 5px; }
-      .radio-item { flex: 1; display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+      .radio-item { flex: 1; display: flex; align-items: center; gap: 8px; padding: 12px; border: 1.5px solid #ddd; border-radius: 14px; cursor: pointer; transition: transform .25s cubic-bezier(.34,1.56,.64,1), border-color .2s, background .2s; }
+      .radio-item:hover { transform: translateY(-2px); border-color: var(--primary); }
+      .radio-item:active { transform: scale(.95); }
       .radio-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--primary); }
-      .radio-checked { border-color: var(--primary); background: #fffbf5; color: var(--primary); }
-      .store-info-box { display: none; background: #eef7fa; border: 1px solid #b8daff; border-radius: 8px; padding: 15px; color: #004085; font-size: 14px; line-height: 1.6; margin-top: 10px; }
-      .payment-box { background: #fff8ee; border: 2px solid #e4dccb; border-radius: 10px; padding: 15px; margin-top: 25px; }
+      .radio-checked { border-color: var(--primary); background: #fffbf5; color: var(--primary); animation: jellyBounce .5s cubic-bezier(.34,1.56,.64,1); }
+      .store-info-box { display: none; background: #eef7fa; border: 1px solid #b8daff; border-radius: 12px; padding: 15px; color: #004085; font-size: 14px; line-height: 1.6; margin-top: 10px; animation: softDrop .45s cubic-bezier(.34,1.56,.64,1); }
+      .payment-box { background: #fff8ee; border: 2px solid #e4dccb; border-radius: 18px; padding: 15px; margin-top: 25px; }
       .total-price { font-size: 1.1rem; color: #d63031; font-weight: bold; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
+      .total-price.bump { animation: popIn .4s cubic-bezier(.34,1.56,.64,1); }
       .price-detail { font-size: 0.9rem; color: #888; font-weight: normal; }
       .bank-info { font-size: 14px; color: #555; line-height: 1.6; }
       .bank-highlight { color: #000; font-weight: bold; font-size: 15px; margin-right: 5px; }
-      .btn-copy-small { font-size: 12px; padding: 2px 8px; border: 1px solid #d4a373; background: #fff; color: #d4a373; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-      .btn-copy-small:active { background: #d4a373; color: white; }
-      .btn { width: 100%; padding: 15px; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
-      .btn-submit { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(212, 163, 115, 0.3); }
-      .btn-outline { background: transparent; border: 1px solid #666; color: #666; margin-top: 10px; }
+      .btn-copy-small { font-size: 12px; padding: 2px 8px; border: 1px solid #d4a373; background: #fff; color: #d4a373; border-radius: 8px; cursor: pointer; transition: transform .15s cubic-bezier(.34,1.56,.64,1), background .15s, color .15s; }
+      .btn-copy-small:hover { transform: scale(1.08); }
+      .btn-copy-small:active { background: #d4a373; color: white; transform: scale(.92); }
+      /* 送出按鈕：3D 按壓（改編自 21st.dev Pop Button）+ hover 抬升 */
+      .btn { width: 100%; padding: 15px; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .2s, border-bottom-width .1s; }
+      .btn-submit { position: relative; background: var(--primary); color: white; border-bottom: 5px solid var(--primary-dark); box-shadow: 0 6px 14px rgba(212, 163, 115, 0.35); transform-origin: bottom; }
+      .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 9px 20px rgba(212, 163, 115, 0.45); }
+      .btn-submit:active:not(:disabled) { transform: translateY(2px) scaleY(.96); border-bottom-width: 2px; box-shadow: 0 3px 8px rgba(212, 163, 115, 0.3); }
+      .btn-submit:disabled { opacity: .75; cursor: default; }
+      .btn-outline { background: transparent; border: 1.5px solid #666; color: #666; margin-top: 10px; }
+      .btn-outline:hover { transform: translateY(-1px); }
+      .btn-outline:active { transform: scale(.97); }
+      /* 送出中的轉圈（原檔引用 .loader 但未定義，補上） */
+      .loader { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; vertical-align: -3px; animation: spin .7s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
       .success-card { text-align: center; padding: 20px 10px; }
-      .success-icon { font-size: 4rem; color: var(--success); margin-bottom: 15px; }
+      .success-icon { font-size: 4rem; color: var(--success); margin-bottom: 15px; display: inline-block; }
       .success-title { font-size: 1.5rem; font-weight: bold; color: #333; margin-bottom: 10px; }
       .success-desc { color: #888; font-size: 14px; margin-bottom: 20px; }
       .order-summary { background: #f8f9fa; border-radius: 10px; padding: 20px; text-align: left; display: inline-block; width: 100%; box-sizing: border-box; border: 1px solid #eee; }
@@ -50,6 +71,36 @@
       .badge { display: inline-block; padding: 2px 8px; background: #e3f2fd; color: #0d6efd; border-radius: 4px; font-size: 12px; }
       @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
       .hide { display: none !important; }
+
+      /* ===== 進場動畫（改編自 21st.dev Blur Fade：模糊+上浮+微彈，逐段錯開）===== */
+      @keyframes blurFadeUp {
+        from { opacity: 0; transform: translateY(16px) scale(.98); filter: blur(6px); }
+        to   { opacity: 1; transform: translateY(0) scale(1);   filter: blur(0); }
+      }
+      .enter { animation: blurFadeUp .6s cubic-bezier(.22,.9,.35,1.15) both; animation-delay: calc(var(--i, 0) * 90ms); }
+      @keyframes bannerIn { from { opacity: 0; transform: scale(1.04); filter: blur(10px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
+      .banner-container { animation: bannerIn .8s ease-out both; }
+      @keyframes cakeWiggle { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-12deg) scale(1.15); } 45% { transform: rotate(10deg) scale(1.1); } 70% { transform: rotate(-5deg); } }
+      .cake-emoji { display: inline-block; animation: cakeWiggle 1s ease-in-out .6s both; }
+
+      /* 條件出現的區塊：軟著陸 */
+      @keyframes softDrop { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
+      #dateErrorMsg, #festivalErrorMsg, #blockedDateMsg, #dragonBoatMsg, #linePayArea, #bankInfoArea { animation: softDrop .4s cubic-bezier(.34,1.56,.64,1); }
+
+      /* ===== 畫面切換轉場：表單淡出上飄 → 成功畫面果凍彈入 ===== */
+      @keyframes viewOut { to { opacity: 0; transform: translateY(-20px) scale(.97); filter: blur(4px); } }
+      .view-out { animation: viewOut .35s ease-in both; pointer-events: none; }
+      @keyframes viewIn { from { opacity: 0; transform: translateY(30px) scale(.94); } 70% { transform: translateY(-4px) scale(1.01); } to { opacity: 1; transform: none; } }
+      #successView.show { animation: viewIn .55s cubic-bezier(.34,1.56,.64,1) both; }
+      @keyframes iconPop { 0% { transform: scale(0) rotate(-30deg); } 55% { transform: scale(1.25) rotate(8deg); } 75% { transform: scale(.92) rotate(-3deg); } 100% { transform: scale(1) rotate(0); } }
+      #successView.show .success-icon { animation: iconPop .7s cubic-bezier(.34,1.56,.64,1) .15s both; }
+
+      /* 粒子（改編自 21st.dev Particle Button） */
+      .burst-dot { position: fixed; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 9999; }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; }
+      }
     </style>
   </head>
   <body>
@@ -58,27 +109,36 @@
     </div>
     <div class="container" id="formView" style="display:block;">
       <div id="liffStatus" style="font-size:12px; color:#ccc; text-align:center; margin-bottom:5px;">Loading...</div>
-      <h2>🍰 LikeaDream彌月試吃申請</h2>
+      <h2 class="enter" style="--i:0;"><span class="cake-emoji">🍰</span> LikeaDream彌月試吃申請</h2>
       <form id="tastingForm" onsubmit="event.preventDefault(); submitForm()">
         <input type="hidden" id="userIdField" name="userId">
         <input type="hidden" id="lineNameField" name="lineName">
 
+        <div class="enter" style="--i:1;">
         <label class="required">選擇申請方案 (可複選)</label>
         <div class="plan-group">
           <label class="plan-item"><input type="checkbox" name="plan1" value="方案一：蜂蜜蛋糕" data-price="300" onchange="calcTotal()"><span class="plan-text"><span>方案一：蜂蜜蛋糕</span> <span class="price-tag">$300</span></span></label>
           <label class="plan-item"><input type="checkbox" name="plan2" value="方案二：曲奇餅乾" data-price="200" onchange="calcTotal()"><span class="plan-text"><span>方案二：曲奇餅乾</span> <span class="price-tag">$200</span></span></label>
           <label class="plan-item"><input type="checkbox" name="plan3" value="方案三：Dreamy旋轉筒" data-price="350" onchange="calcTotal()"><span class="plan-text"><span>方案三：Dreamy旋轉筒</span> <span class="price-tag">$350</span></span></label>
         </div>
+        </div>
 
+        <div class="enter" style="--i:2;">
         <label class="required">訂購姓名</label>
         <input type="text" id="cName" required placeholder="請輸入您的姓名">
+        </div>
 
+        <div class="enter" style="--i:3;">
         <label class="required">聯絡電話</label>
         <input type="tel" id="cPhone" required placeholder="09xx-xxx-xxx" pattern="\d{10}" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+        </div>
 
+        <div class="enter" style="--i:4;">
         <label>載具/統一編號 (選填)</label>
         <input type="text" id="cTaxId" placeholder="若需載具/統編請填寫">
+        </div>
 
+        <div class="enter" style="--i:5;">
         <label class="required">配送方式</label>
         <div class="radio-group">
           <label class="radio-item radio-checked" id="lblShip">
@@ -87,6 +147,7 @@
           <label class="radio-item" id="lblPickup">
             <input type="radio" name="deliveryMethod" value="門市取貨" onchange="toggleDelivery('pickup')"> 門市取貨
           </label>
+        </div>
         </div>
 
         <div id="storeInfoBox" class="store-info-box">
@@ -97,26 +158,27 @@
           <span style="color:#d63031; font-size:12px;">★ 門市取貨免運費</span>
         </div>
 
-        <div id="addressBox">
+        <div id="addressBox" class="enter" style="--i:6;">
           <label class="required">收件地址</label>
           <input type="text" id="cAddress" required placeholder="請填寫完整收件地址 (判斷本島/離島運費)" oninput="calcTotal()">
         </div>
 
+        <div class="enter" style="--i:7;">
         <label class="required" id="dateLabel">希望出貨日</label>
         <input type="date" id="cDate" required onchange="validateDate()">
-        <div id="dateErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:14px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:5px; border:1px solid #fc8181;">
+        <div id="dateErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:14px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:10px; border:1px solid #fc8181;">
           ❌ 無法選擇過去日期或當天！<br>請選擇明天以後的日期。
         </div>
         <div id="sundayErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; animation: pulse 1.5s infinite;">
           ⛔ 週日無收送服務、請改選其他日期
         </div>
-        <div id="festivalErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:5px; border:1px solid #fc8181;">
+        <div id="festivalErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:10px; border:1px solid #fc8181;">
           🧨 2/15 ~ 2/22 春節休假期間暫停出貨/取貨
         </div>
-        <div id="blockedDateMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:5px; border:1px solid #fc8181;">
+        <div id="blockedDateMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:10px; border:1px solid #fc8181;">
           🚫 4/3 ~ 4/6 清明連假期間暫停出貨/取貨，請改選其他日期
         </div>
-        <div id="dragonBoatMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:5px; border:1px solid #fc8181;">
+        <div id="dragonBoatMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:10px; border:1px solid #fc8181;">
           🛑 連續假期，物流暫停收貨，請選擇其他日期
         </div>
         <div id="pickupOnlyMsg" style="display:none; color:#d63031; font-weight:bold; font-size:14px; margin-top:5px; animation: pulse 1.5s infinite;">
@@ -125,8 +187,9 @@
         <div style="font-size:12px; color:#666; margin-top:3px;" id="dateNote">
           *宅配：最快出貨日為明天，寄出後約1-2天送達<br>*自取：請選擇取貨日期 (週日無配送/取貨)
         </div>
+        </div>
 
-        <div class="payment-box">
+        <div class="payment-box enter" style="--i:8;">
           <div class="total-price" id="totalDisplay">總金額：$0</div>
           <label style="margin-top:0;">付款方式</label>
           <select id="paymentMethod" onchange="togglePayment()">
@@ -152,7 +215,9 @@
             </div>
           </div>
         </div>
+        <div class="enter" style="--i:9;">
         <button type="submit" class="btn btn-submit" id="sBtn">送出申請</button>
+        </div>
       </form>
     </div>
 
@@ -160,8 +225,8 @@
     <div class="container hide" id="successView">
       <div class="success-card">
         <i class="bi bi-check-circle-fill success-icon"></i>
-        <div class="success-title">申請已送出！</div>
-        <p class="success-desc">我們已收到您的申請，將盡快為您安排。</p>
+        <div class="success-title enter" style="--i:1;">申請已送出！</div>
+        <p class="success-desc enter" style="--i:2;">我們已收到您的申請，將盡快為您安排。</p>
 
         <div style="margin-top: 15px; margin-bottom: 25px;">
           <textarea id="copyArea" readonly style="position:absolute; left:-9999px;"></textarea>
@@ -176,7 +241,7 @@
             </div>
           </div>
 
-          <div id="copyStatusMsg" style="font-weight:bold; font-size:16px; margin-bottom:15px; line-height: 1.5;"></div>
+          <div id="copyStatusMsg" class="enter" style="--i:3; font-weight:bold; font-size:16px; margin-bottom:15px; line-height: 1.5;"></div>
 
           <div id="manualCopyBox" style="display:none; margin-bottom:15px;">
             <div style="color:#d63031; font-weight:bold; font-size:16px; margin-bottom:10px; line-height: 1.5;">
@@ -187,15 +252,15 @@
             </button>
           </div>
 
-          <a id="goToLineArea" href="https://lin.ee/oOteG0d" target="_blank" style="text-decoration:none;">
+          <a id="goToLineArea" href="https://lin.ee/oOteG0d" target="_blank" class="enter" style="--i:4; text-decoration:none; display:block;">
             <button class="btn btn-submit" type="button" style="background:#06c755;">
               🚀 前往 LINE 回傳訂單
             </button>
           </a>
         </div>
 
-        <div class="order-summary" id="summaryBox"></div>
-        <div style="margin-top: 20px;">
+        <div class="order-summary enter" style="--i:5;" id="summaryBox"></div>
+        <div class="enter" style="--i:6; margin-top: 20px;">
            <button class="btn btn-outline" onclick="window.location.reload()">返回首頁</button>
         </div>
       </div>
@@ -451,12 +516,63 @@
 
         var finalTotal = productTotal + shippingFee;
         var displayDiv = document.getElementById('totalDisplay');
+        var prevText = displayDiv.innerText;
         if (hasSelected) {
           displayDiv.innerHTML = '<span class="price-detail">商品 ' + productTotal + ' + 運費 ' + shippingFee + '</span><br>總金額：' + finalTotal;
         } else {
           displayDiv.innerHTML = '總金額：$0';
         }
+        if (displayDiv.innerText !== prevText) {
+          displayDiv.classList.remove('bump');
+          void displayDiv.offsetWidth; // 重觸發動畫
+          displayDiv.classList.add('bump');
+        }
         return { productTotal: productTotal, shippingFee: shippingFee, shippingType: shippingType, finalTotal: finalTotal, isPickup: isPickup };
+      }
+
+      // ===== 粒子爆發（改編自 21st.dev Particle Button）=====
+      function burstParticles(btn) {
+        var rect = btn.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        var colors = ['#f8b4c4', '#d4a373', '#ffd97d', '#a8e6cf', '#fff'];
+        for (var i = 0; i < 10; i++) {
+          var el = document.createElement('div');
+          el.className = 'burst-dot';
+          el.style.left = cx + 'px';
+          el.style.top = cy + 'px';
+          el.style.background = colors[i % colors.length];
+          document.body.appendChild(el);
+          var dx = (i % 2 ? 1 : -1) * (Math.random() * 60 + 25);
+          var dy = -Math.random() * 60 - 25;
+          if (el.animate) {
+            el.animate([
+              { transform: 'translate(0,0) scale(0)', opacity: 1 },
+              { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(1.1)', opacity: 1, offset: 0.5 },
+              { transform: 'translate(' + (dx * 1.5) + 'px,' + (dy * 1.6) + 'px) scale(0)', opacity: 0 }
+            ], { duration: 650, delay: i * 35, easing: 'ease-out' }).onfinish = (function(node) {
+              return function() { node.remove(); };
+            })(el);
+          } else {
+            el.remove();
+          }
+        }
+      }
+
+      // ===== 彩帶慶祝（改編自 21st.dev magicui Confetti，奶油粉彩配色）=====
+      function fireConfetti() {
+        if (typeof confetti === 'undefined') return;
+        var colors = ['#f8b4c4', '#d4a373', '#ffd97d', '#a8e6cf', '#fff1e6'];
+        confetti({ particleCount: 70, spread: 80, origin: { y: 0.35 }, colors: colors, scalar: 0.95, shapes: ['circle'], ticks: 120 });
+        setTimeout(function() {
+          confetti({ particleCount: 40, spread: 110, origin: { y: 0.3 }, colors: colors, scalar: 0.7, shapes: ['circle'], ticks: 100 });
+        }, 180);
+        try {
+          var cake = confetti.shapeFromText({ text: '🍰', scalar: 2 });
+          setTimeout(function() {
+            confetti({ particleCount: 8, spread: 70, origin: { y: 0.35 }, shapes: [cake], scalar: 2, ticks: 90, gravity: 0.8 });
+          }, 120);
+        } catch (e) { /* 舊瀏覽器不支援 emoji 形狀就略過 */ }
       }
 
       // ===== 送出表單（核心改動：google.script.run → fetch） =====
@@ -493,6 +609,7 @@
         var btn = document.getElementById("sBtn");
         btn.disabled = true;
         btn.innerHTML = '<span class="loader"></span> 處理中...';
+        burstParticles(btn);
 
         // 組裝訂單文字（buildFinalText(null) 為剪貼簿後備版——複製須在點擊手勢內，等不到編號）
         var planText = plans.join("\n   ");
@@ -582,35 +699,47 @@
         }
       }
 
-      // ===== 顯示成功畫面 =====
+      // ===== 顯示成功畫面（表單淡出 → 成功畫面果凍彈入 + 彩帶）=====
       function showSuccess(data, plans, calcResult) {
-        document.getElementById("mainBanner").classList.add("hide");
-        document.getElementById("formView").classList.add("hide");
-        document.getElementById("successView").classList.remove("hide");
+        var banner = document.getElementById("mainBanner");
+        var formView = document.getElementById("formView");
+        var successView = document.getElementById("successView");
 
-        if (data.paymentMethod === 'LINE PAY') {
-          document.getElementById("successLinePayArea").style.display = "block";
-        } else {
-          document.getElementById("successLinePayArea").style.display = "none";
-        }
+        banner.classList.add("view-out");
+        formView.classList.add("view-out");
 
-        var plansHtml = plans.map(function(p) { return '<div>• ' + p + '</div>'; }).join('');
-        var summaryHtml =
-          '<div class="summary-title">📋 申請資料確認</div>' +
-          '<div class="summary-row"><span>姓名</span><span>' + data.cName + '</span></div>' +
-          '<div class="summary-row"><span>電話</span><span>' + data.cPhone + '</span></div>' +
-          '<div class="summary-row"><span>配送</span><span class="badge">' + data.deliveryMethod + '</span></div>' +
-          '<div class="summary-row"><span>地址</span><span>' + data.cAddress + '</span></div>' +
-          '<div class="summary-row"><span>出貨日期</span><span>' + data.cDate + '</span></div>' +
-          '<div style="margin: 10px 0; border-top:1px dashed #eee; padding-top:5px; font-size:13px; color:#666;">' +
-            plansHtml +
-          '</div>' +
-          '<div class="summary-total">' +
-            '總金額：' + data.totalAmount +
-            '<div style="font-size:12px; color:#888; font-weight:normal;">(' + data.paymentMethod + ')</div>' +
-          '</div>';
-        document.getElementById("summaryBox").innerHTML = summaryHtml;
-        window.scrollTo(0, 0);
+        setTimeout(function() {
+          banner.classList.add("hide");
+          formView.classList.add("hide");
+
+          if (data.paymentMethod === 'LINE PAY') {
+            document.getElementById("successLinePayArea").style.display = "block";
+          } else {
+            document.getElementById("successLinePayArea").style.display = "none";
+          }
+
+          var plansHtml = plans.map(function(p) { return '<div>• ' + p + '</div>'; }).join('');
+          var summaryHtml =
+            '<div class="summary-title">📋 申請資料確認</div>' +
+            '<div class="summary-row"><span>姓名</span><span>' + data.cName + '</span></div>' +
+            '<div class="summary-row"><span>電話</span><span>' + data.cPhone + '</span></div>' +
+            '<div class="summary-row"><span>配送</span><span class="badge">' + data.deliveryMethod + '</span></div>' +
+            '<div class="summary-row"><span>地址</span><span>' + data.cAddress + '</span></div>' +
+            '<div class="summary-row"><span>出貨日期</span><span>' + data.cDate + '</span></div>' +
+            '<div style="margin: 10px 0; border-top:1px dashed #eee; padding-top:5px; font-size:13px; color:#666;">' +
+              plansHtml +
+            '</div>' +
+            '<div class="summary-total">' +
+              '總金額：' + data.totalAmount +
+              '<div style="font-size:12px; color:#888; font-weight:normal;">(' + data.paymentMethod + ')</div>' +
+            '</div>';
+          document.getElementById("summaryBox").innerHTML = summaryHtml;
+
+          successView.classList.remove("hide");
+          successView.classList.add("show");
+          window.scrollTo(0, 0);
+          setTimeout(fireConfetti, 300);
+        }, 360);
       }
 
       // ===== 自動發送訂單到 LINE（三層保險） =====
