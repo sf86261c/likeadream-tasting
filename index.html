@@ -269,6 +269,7 @@
     <script>
       var GAS_API_URL = "https://script.google.com/macros/s/AKfycbw0qvdCYE4bRJ1V9R1nmdl95GBveMp6fNzH2unNDK1PGfkp-PKzKsGXnHMciUaG9lTKDA/exec";
       var APPLICATIONS_API = "https://likeadreamcastella.zeabur.app/api/applications";
+      var FORM_RELAY_API = "https://likeadreamcastella.zeabur.app/api/form-relay";
 
       var currentUserId = "";
 
@@ -287,21 +288,17 @@
         liff.init({ liffId: myLiffId })
           .then(function() {
             document.getElementById("liffStatus").style.display = "none";
-            if (!liff.isInClient()) {
-              showWebBlocked();
+            if (!liff.isLoggedIn()) {
+              liff.login();
               return;
             }
-            if (liff.isLoggedIn()) {
-              liff.getProfile().then(function(profile) {
-                currentUserId = profile.userId;
-                var field = document.getElementById("userIdField");
-                if (field) field.value = currentUserId;
-                var nameField = document.getElementById("lineNameField");
-                if (nameField) nameField.value = profile.displayName;
-              });
-            } else {
-              showWebBlocked();
-            }
+            liff.getProfile().then(function(profile) {
+              currentUserId = profile.userId;
+              var field = document.getElementById("userIdField");
+              if (field) field.value = currentUserId;
+              var nameField = document.getElementById("lineNameField");
+              if (nameField) nameField.value = profile.displayName;
+            });
           })
           .catch(function(err) {
             console.error("LIFF Init Error:", err);
@@ -309,7 +306,7 @@
           });
       }
 
-      // Q4-A：外部瀏覽器（取不到 LINE 身分）一律擋下，避免無法寫入申請正本
+      // 僅供 LIFF 初始化失敗時使用（例如網路異常）；一般未登入已改走 liff.login()，不再擋外部瀏覽器
       // 注意：liffStatus 在 formView 內，不可隱藏 formView（會連提示一起藏），只藏表單本體
       function showWebBlocked() {
         var banner = document.getElementById("mainBanner");
@@ -324,7 +321,7 @@
           st.style.fontWeight = "bold";
           st.style.padding = "40px 12px";
           st.style.lineHeight = "1.8";
-          st.innerText = "此表單請從 手機 LINE 聊天室點擊連結開啟填寫 🙏";
+          st.innerText = "連線失敗，請重新整理頁面再試 🙏";
         }
       }
 
@@ -742,7 +739,25 @@
         }, 360);
       }
 
-      // ===== 自動發送訂單到 LINE（三層保險） =====
+      // ===== 伺服器回執：LIFF token 換 OA 推播（sendMessages 打不到或非 LINE 內建瀏覽器時的退路） =====
+      function tryServerRelay(texts) {
+        var token = null;
+        try {
+          token = (typeof liff !== 'undefined' && liff.getAccessToken) ? liff.getAccessToken() : null;
+        } catch (e) {
+          token = null;
+        }
+        if (!token) return Promise.resolve(false);
+        return fetch(FORM_RELAY_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ accessToken: token, texts: texts })
+        })
+          .then(function(response) { return response.ok; })
+          .catch(function() { return false; });
+      }
+
+      // ===== 自動發送訂單到 LINE（sendMessages 優先，退伺服器回執，再退剪貼簿） =====
       function autoSendOrder(orderText, paymentMethod, clipboardOk) {
         var copyStatusMsg = document.getElementById("copyStatusMsg");
         var manualCopyBox = document.getElementById("manualCopyBox");
@@ -753,10 +768,24 @@
           return;
         }
 
+        // ===== 退路：伺服器回執成功 → 顯示結果；失敗 → 剪貼簿保底 =====
+        function relayThenFallback() {
+          tryServerRelay([orderText]).then(function(ok) {
+            if (ok) {
+              manualCopyBox.style.display = "none";
+              goToLineArea.style.display = "none";
+              copyStatusMsg.innerHTML =
+                '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已傳送至官方 LINE 對話！</span>';
+            } else {
+              showCopyResult(clipboardOk);
+            }
+          });
+        }
+
         // ===== 第一層：sendMessages（全自動，需要聊天室上下文） =====
         function trySendMessages() {
           if (!liff.isInClient()) {
-            trySharePicker();
+            relayThenFallback();
             return;
           }
           liff.sendMessages([{ type: 'text', text: orderText }])
@@ -780,33 +809,7 @@
             })
             .catch(function(err) {
               console.error('sendMessages failed:', err);
-              trySharePicker();
-            });
-        }
-
-        // ===== 第二層：shareTargetPicker（彈出分享視窗，不需聊天室上下文） =====
-        function trySharePicker() {
-          if (!liff.isApiAvailable('shareTargetPicker')) {
-            console.log('shareTargetPicker not available');
-            showCopyResult(clipboardOk);
-            return;
-          }
-          liff.shareTargetPicker([{ type: 'text', text: orderText }])
-            .then(function(res) {
-              if (res) {
-                manualCopyBox.style.display = "none";
-                goToLineArea.style.display = "none";
-                copyStatusMsg.innerHTML =
-                  '<span style="color:#28a745; font-size:18px;">✅ 訂單已成功分享！</span><br>' +
-                  '<span style="color:#888; font-size:14px;">訂單已傳送至您選擇的聊天室</span>';
-              } else {
-                // 使用者取消了分享
-                showCopyResult(clipboardOk);
-              }
-            })
-            .catch(function(err) {
-              console.error('shareTargetPicker failed:', err);
-              showCopyResult(clipboardOk);
+              relayThenFallback();
             });
         }
 
