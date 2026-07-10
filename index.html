@@ -85,7 +85,7 @@
 
       /* 條件出現的區塊：軟著陸 */
       @keyframes softDrop { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
-      #dateErrorMsg, #festivalErrorMsg, #blockedDateMsg, #dragonBoatMsg, #linePayArea, #bankInfoArea { animation: softDrop .4s cubic-bezier(.34,1.56,.64,1); }
+      #dateErrorMsg, #blockedDateMsg, #linePayArea, #bankInfoArea { animation: softDrop .4s cubic-bezier(.34,1.56,.64,1); }
 
       /* ===== 畫面切換轉場：表單淡出上飄 → 成功畫面果凍彈入 ===== */
       @keyframes viewOut { to { opacity: 0; transform: translateY(-20px) scale(.97); filter: blur(4px); } }
@@ -172,15 +172,7 @@
         <div id="sundayErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; animation: pulse 1.5s infinite;">
           ⛔ 週日無收送服務、請改選其他日期
         </div>
-        <div id="festivalErrorMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:10px; border:1px solid #fc8181;">
-          🧨 2/15 ~ 2/22 春節休假期間暫停出貨/取貨
-        </div>
-        <div id="blockedDateMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:10px; border:1px solid #fc8181;">
-          🚫 4/3 ~ 4/6 清明連假期間暫停出貨/取貨，請改選其他日期
-        </div>
-        <div id="dragonBoatMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:10px; border:1px solid #fc8181;">
-          🛑 連續假期，物流暫停收貨，請選擇其他日期
-        </div>
+        <div id="blockedDateMsg" style="display:none; color:#d63031; font-weight:bold; font-size:16px; margin-top:5px; background:#fff5f5; padding:8px; border-radius:10px; border:1px solid #fc8181;"></div>
         <div id="pickupOnlyMsg" style="display:none; color:#d63031; font-weight:bold; font-size:14px; margin-top:5px; animation: pulse 1.5s infinite;">
           ⚠️ 2/13、2/14 因節日貨量大，僅限「門市自取」
         </div>
@@ -270,6 +262,30 @@
       var GAS_API_URL = "https://script.google.com/macros/s/AKfycbw0qvdCYE4bRJ1V9R1nmdl95GBveMp6fNzH2unNDK1PGfkp-PKzKsGXnHMciUaG9lTKDA/exec";
       var APPLICATIONS_API = "https://likeadreamcastella.zeabur.app/api/applications";
       var FORM_RELAY_API = "https://likeadreamcastella.zeabur.app/api/form-relay";
+      var BLOCKED_DATES_API = "https://likeadreamcastella.zeabur.app/api/blocked-dates";
+      var FORM_ID = "tasting";
+      var blockedDates = [];
+
+      function loadBlockedDates() {
+        fetch(BLOCKED_DATES_API)
+          .then(function(res) { return res.ok ? res.json() : null; })
+          .then(function(data) {
+            var entries = (data && data.entries) || [];
+            blockedDates = entries.filter(function(e) {
+              return e && e.forms && e.forms.indexOf(FORM_ID) !== -1 && typeof e.start === 'string' && typeof e.end === 'string';
+            });
+            if (document.getElementById("cDate").value) validateDate();
+          })
+          .catch(function() {});
+      }
+
+      function findBlockedEntry(dateStr) {
+        for (var i = 0; i < blockedDates.length; i++) {
+          var e = blockedDates[i];
+          if (dateStr >= e.start && dateStr <= e.end) return e;
+        }
+        return null;
+      }
 
       var currentUserId = "";
 
@@ -281,6 +297,7 @@
         var minDate = tomorrow.toISOString().split('T')[0];
         document.getElementById("cDate").min = minDate;
         initializeLiff('2008790381-8Lkh37NS');
+        loadBlockedDates();
       };
 
       // ===== LIFF 初始化 =====
@@ -339,20 +356,16 @@
         var dateStr = input.value;
         var errorMsg = document.getElementById("dateErrorMsg");
         var sundayMsg = document.getElementById("sundayErrorMsg");
-        var festivalMsg = document.getElementById("festivalErrorMsg");
         var pickupMsg = document.getElementById("pickupOnlyMsg");
         var radioShip = document.querySelector('input[value="宅配寄送"]');
         var lblShip = document.getElementById('lblShip');
         var radioPickup = document.querySelector('input[value="門市取貨"]');
 
         var blockedMsg = document.getElementById("blockedDateMsg");
-        var dragonBoatMsg = document.getElementById("dragonBoatMsg");
 
         errorMsg.style.display = "none";
         sundayMsg.style.display = "none";
-        festivalMsg.style.display = "none";
         blockedMsg.style.display = "none";
-        dragonBoatMsg.style.display = "none";
         pickupMsg.style.display = "none";
 
         if (!dateStr) {
@@ -375,26 +388,10 @@
           if (navigator.vibrate) navigator.vibrate(200);
           return;
         }
-        if (month === 2 && day >= 15 && day <= 22) {
-          festivalMsg.style.display = "block";
-          input.value = "";
-          if (navigator.vibrate) navigator.vibrate(200);
-          radioShip.disabled = false;
-          lblShip.style.opacity = "1";
-          lblShip.style.pointerEvents = "auto";
-          return;
-        }
-        if (year === 2026 && month === 4 && day >= 3 && day <= 6) {
+        var be = findBlockedEntry(dateStr);
+        if (be) {
+          blockedMsg.textContent = "🚫 " + formatBlockedRange(be) + " " + be.reason + "，請改選其他日期";
           blockedMsg.style.display = "block";
-          input.value = "";
-          if (navigator.vibrate) navigator.vibrate(200);
-          radioShip.disabled = false;
-          lblShip.style.opacity = "1";
-          lblShip.style.pointerEvents = "auto";
-          return;
-        }
-        if (year === 2026 && month === 6 && (day === 19 || day === 20)) {
-          dragonBoatMsg.style.display = "block";
           input.value = "";
           if (navigator.vibrate) navigator.vibrate(200);
           radioShip.disabled = false;
@@ -420,6 +417,14 @@
           lblShip.style.opacity = "1";
           lblShip.style.pointerEvents = "auto";
         }
+      }
+
+      function formatBlockedRange(e) {
+        function fmt(d) {
+          var p = d.split('-');
+          return parseInt(p[1], 10) + '/' + parseInt(p[2], 10);
+        }
+        return e.start === e.end ? fmt(e.start) : fmt(e.start) + ' ~ ' + fmt(e.end);
       }
 
       // ===== 配送方式切換 =====
@@ -585,6 +590,9 @@
 
         var phone = document.getElementById("cPhone").value;
         if (phone.length !== 10) { alert("手機號碼格式錯誤！請填寫 10 碼數字"); return; }
+
+        validateDate();
+        if (!document.getElementById("cDate").value) { alert("所選日期無法出貨/取貨，請重新選擇日期！"); return; }
 
         var data = {
           userId: currentUserId,
