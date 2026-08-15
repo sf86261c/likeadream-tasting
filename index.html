@@ -289,6 +289,11 @@
 
       var currentUserId = "";
 
+      function createSubmissionId() {
+        if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+        return 'submission-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+      }
+
       // ===== 頁面載入 =====
       window.onload = function() {
         var today = new Date();
@@ -640,6 +645,7 @@
         }
 
         var fallbackText = buildFinalText(null);
+        var submissionId = createSubmissionId();
         document.getElementById("copyArea").value = fallbackText;
         var clipboardOk = fallbackCopy(fallbackText);
         if (!clipboardOk) {
@@ -668,16 +674,16 @@
           var applicationNo = (res.status === 200 && res.body && res.body.application_no) ? res.body.application_no : null;
           var finalText = buildFinalText(applicationNo);
           document.getElementById("copyArea").value = finalText;
-          submitToGas(finalText);
+          submitToGas(finalText, submissionId);
         });
 
         // (c) 路：GAS 寫 Google Sheet 照舊（Q8-A），成功後 (b) 路 sendMessages
-        function submitToGas(finalText) {
+        function submitToGas(finalText, submissionId) {
           fetch(GAS_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             redirect: 'follow',
-            body: JSON.stringify(data)
+            body: JSON.stringify(Object.assign({}, data, { submissionId: submissionId }))
           })
           .then(function(response) { return response.text(); })
           .then(function(text) {
@@ -688,7 +694,7 @@
             }
             if (res.status === "success") {
               showSuccess(data, plans, calcResult);
-              autoSendOrder(finalText, data.paymentMethod, clipboardOk);
+              autoSendOrder(finalText, data.paymentMethod, clipboardOk, submissionId);
             } else {
               alert(res.msg || "送出失敗，請稍後再試");
               btn.disabled = false;
@@ -748,7 +754,7 @@
       }
 
       // ===== 伺服器回執：LIFF token 換 OA 推播（sendMessages 打不到或非 LINE 內建瀏覽器時的退路） =====
-      function tryServerRelay(texts) {
+      function tryServerRelay(texts, submissionId) {
         var token = null;
         try {
           token = (typeof liff !== 'undefined' && liff.getAccessToken) ? liff.getAccessToken() : null;
@@ -759,14 +765,35 @@
         return fetch(FORM_RELAY_API, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ accessToken: token, texts: texts })
+          body: JSON.stringify({ accessToken: token, texts: texts, submissionId: submissionId, formType: FORM_ID })
         })
           .then(function(response) { return response.ok; })
           .catch(function() { return false; });
       }
 
       // ===== 自動發送訂單到 LINE（sendMessages 優先，退伺服器回執，再退剪貼簿） =====
-      function autoSendOrder(orderText, paymentMethod, clipboardOk) {
+      function notifyOnly(texts, submissionId) {
+        var NOTIFY_TIMEOUT_MS = 1500;
+        var token = null;
+        try {
+          token = (typeof liff !== 'undefined' && liff.getAccessToken) ? liff.getAccessToken() : null;
+        } catch (e) {
+          token = null;
+        }
+        if (!token) return Promise.resolve(false);
+        var request = fetch(FORM_RELAY_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          keepalive: true,
+          body: JSON.stringify({ accessToken: token, texts: texts, submissionId: submissionId, formType: FORM_ID, notificationOnly: true })
+        }).then(function(response) { return response.ok; }).catch(function() { return false; });
+        return Promise.race([
+          request,
+          new Promise(function(resolve) { setTimeout(function() { resolve(false); }, NOTIFY_TIMEOUT_MS); })
+        ]);
+      }
+
+      function autoSendOrder(orderText, paymentMethod, clipboardOk, submissionId) {
         var copyStatusMsg = document.getElementById("copyStatusMsg");
         var manualCopyBox = document.getElementById("manualCopyBox");
         var goToLineArea = document.getElementById("goToLineArea");
@@ -778,7 +805,7 @@
 
         // ===== 退路：伺服器回執成功 → 顯示結果；失敗 → 剪貼簿保底 =====
         function relayThenFallback() {
-          tryServerRelay([orderText]).then(function(ok) {
+          tryServerRelay([orderText], submissionId).then(function(ok) {
             if (ok) {
               manualCopyBox.style.display = "none";
               goToLineArea.style.display = "none";
@@ -798,6 +825,7 @@
           }
           liff.sendMessages([{ type: 'text', text: orderText }])
             .then(function() {
+              return notifyOnly([orderText], submissionId).then(function() {
               manualCopyBox.style.display = "none";
               goToLineArea.style.display = "none";
               if (paymentMethod === 'LINE PAY') {
@@ -814,6 +842,7 @@
                   '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已自動傳送至聊天室！</span><br>' +
                   '<span style="color:#888; font-size:14px;">無需手動複製，系統已為您完成</span>';
               }
+            });
             })
             .catch(function(err) {
               console.error('sendMessages failed:', err);
