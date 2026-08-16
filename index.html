@@ -761,14 +761,45 @@
         } catch (e) {
           token = null;
         }
-        if (!token) return Promise.resolve(false);
-        return fetch(FORM_RELAY_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ accessToken: token, texts: texts, submissionId: submissionId, formType: FORM_ID })
-        })
-          .then(function(response) { return response.ok; })
-          .catch(function() { return false; });
+        if (!token) return Promise.resolve({ ok: false, notify: false });
+        var RELAY_TIMEOUT_MS = 5000;
+        var controller = null;
+        try { if (typeof AbortController === 'function') controller = new AbortController(); } catch (e) {}
+        return new Promise(function(resolve) {
+          var settled = false;
+          var timerId = null;
+          function finish(result) {
+            if (settled) return;
+            settled = true;
+            if (timerId !== null) clearTimeout(timerId);
+            resolve(result);
+          }
+          timerId = setTimeout(function() {
+            if (controller) { try { controller.abort(); } catch (e) {} }
+            finish({ ok: false, notify: true });
+          }, RELAY_TIMEOUT_MS);
+          var init = {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ accessToken: token, texts: texts, submissionId: submissionId, formType: FORM_ID })
+          };
+          if (controller) init.signal = controller.signal;
+          var request;
+          try { request = fetch(FORM_RELAY_API, init); } catch (e) { finish({ ok: false, notify: true }); return; }
+          Promise.resolve(request).then(function(response) {
+            try {
+              if (response && response.ok) {
+                finish({ ok: true, notify: false });
+                return;
+              }
+              // Real Fetch responses always expose a numeric status. Unknown
+              // response shapes remain notifyable for old runtimes/mocks,
+              // while explicit client failures stay clipboard-only.
+              var status = response && response.status;
+              finish({ ok: false, notify: typeof status !== 'number' || (status >= 500 && status < 600) });
+            } catch (e) { finish({ ok: false, notify: true }); }
+          }, function() { finish({ ok: false, notify: true }); });
+        });
       }
 
       // ===== 自動發送訂單到 LINE（sendMessages 優先，退伺服器回執，再退剪貼簿） =====
@@ -781,16 +812,34 @@
           token = null;
         }
         if (!token) return Promise.resolve(false);
-        var request = fetch(FORM_RELAY_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          keepalive: true,
-          body: JSON.stringify({ accessToken: token, texts: texts, submissionId: submissionId, formType: FORM_ID, notificationOnly: true })
-        }).then(function(response) { return response.ok; }).catch(function() { return false; });
-        return Promise.race([
-          request,
-          new Promise(function(resolve) { setTimeout(function() { resolve(false); }, NOTIFY_TIMEOUT_MS); })
-        ]);
+        var controller = null;
+        try { if (typeof AbortController === 'function') controller = new AbortController(); } catch (e) {}
+        return new Promise(function(resolve) {
+          var settled = false;
+          var timerId = null;
+          function finish(ok) {
+            if (settled) return;
+            settled = true;
+            if (timerId !== null) clearTimeout(timerId);
+            resolve(Boolean(ok));
+          }
+          timerId = setTimeout(function() {
+            if (controller) { try { controller.abort(); } catch (e) {} }
+            finish(false);
+          }, NOTIFY_TIMEOUT_MS);
+          var init = {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            keepalive: true,
+            body: JSON.stringify({ accessToken: token, texts: texts, submissionId: submissionId, formType: FORM_ID, notificationOnly: true })
+          };
+          if (controller) init.signal = controller.signal;
+          var request;
+          try { request = fetch(FORM_RELAY_API, init); } catch (e) { finish(false); return; }
+          Promise.resolve(request).then(function(response) {
+            try { finish(Boolean(response && response.ok)); } catch (e) { finish(false); }
+          }, function() { finish(false); });
+        });
       }
 
       function autoSendOrder(orderText, paymentMethod, clipboardOk, submissionId) {
@@ -805,12 +854,16 @@
 
         // ===== 退路：伺服器回執成功 → 顯示結果；失敗 → 剪貼簿保底 =====
         function relayThenFallback() {
-          tryServerRelay([orderText], submissionId).then(function(ok) {
-            if (ok) {
+          tryServerRelay([orderText], submissionId).then(function(result) {
+            if (result && result.ok) {
               manualCopyBox.style.display = "none";
               goToLineArea.style.display = "none";
               copyStatusMsg.innerHTML =
                 '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已傳送至官方 LINE 對話！</span>';
+            } else if (result && result.notify) {
+              notifyOnly([orderText], submissionId).then(function() {
+                showCopyResult(clipboardOk);
+              });
             } else {
               showCopyResult(clipboardOk);
             }
@@ -818,14 +871,28 @@
         }
 
         // ===== 第一層：sendMessages（全自動，需要聊天室上下文） =====
-        function trySendMessages() {
-          if (!liff.isInClient()) {
+          function trySendMessages() {
+          var inClient = false;
+          try { inClient = liff.isInClient(); } catch (err) {
+            console.error('isInClient failed:', err);
             relayThenFallback();
             return;
           }
-          liff.sendMessages([{ type: 'text', text: orderText }])
-            .then(function() {
-              return notifyOnly([orderText], submissionId).then(function() {
+          if (!inClient) {
+            relayThenFallback();
+            return;
+          }
+          function sendFailed(err) {
+            console.error('sendMessages failed:', err);
+            relayThenFallback();
+          }
+          var sendPromise;
+          try { sendPromise = liff.sendMessages([{ type: 'text', text: orderText }]); } catch (err) {
+            sendFailed(err);
+            return;
+          }
+          Promise.resolve(sendPromise).then(function() {
+            try {
               manualCopyBox.style.display = "none";
               goToLineArea.style.display = "none";
               if (paymentMethod === 'LINE PAY') {
@@ -842,12 +909,10 @@
                   '<span style="color:#28a745; font-size:18px;">✅ 訂單明細已自動傳送至聊天室！</span><br>' +
                   '<span style="color:#888; font-size:14px;">無需手動複製，系統已為您完成</span>';
               }
-            });
-            })
-            .catch(function(err) {
-              console.error('sendMessages failed:', err);
-              relayThenFallback();
-            });
+            } catch (uiErr) {
+              console.error('sendMessages success UI failed:', uiErr);
+            }
+          }, sendFailed);
         }
 
         // 開始嘗試
