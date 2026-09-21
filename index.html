@@ -446,6 +446,11 @@
         return state === 'action_required' || state === 'sending' || state === 'succeeded' || state === 'unknown' || state === 'failed';
       }
 
+      function isOfficialCustomerSuccess(result) {
+        return Boolean(result && result.customer &&
+          result.customer.status === 'succeeded' && result.customer.source === 'official');
+      }
+
       // ===== 頁面載入 =====
       window.onload = function() {
         var today = new Date();
@@ -822,9 +827,7 @@
           var finalText = saved.customerTexts.join("\n\n");
           document.getElementById("copyArea").value = finalText;
           showSuccess(data, plans, calcResult, saved.applicationNo);
-          return notifyStore(submissionId).then(function() {
-            autoSendOrder(finalText, data.paymentMethod, clipboardOk, submissionId, { verified: true, customerTexts: saved.customerTexts });
-          });
+          autoSendOrder(finalText, data.paymentMethod, clipboardOk, submissionId, { verified: true, customerTexts: saved.customerTexts });
         }).catch(function(err) {
           submissionBusy = false;
           btn.disabled = false;
@@ -948,6 +951,33 @@
       function autoSendOrder(orderText, paymentMethod, clipboardOk, submissionId, delivery) {
         var verified = delivery && delivery.verified === true;
         var messages = verified ? messageTextsToMessages(delivery.customerTexts) : buildLineMessages(orderText);
+
+        function handleFallbackResult(result, afterCustomerFailure) {
+          var state = result && result.customer && result.customer.status;
+          if (isOfficialCustomerSuccess(result)) {
+            showOfficialRelaySuccess(paymentMethod, submissionId);
+          } else if (state === 'succeeded' && result.customer.source === 'client') {
+            showCustomerSentSuccess(paymentMethod);
+          } else if (state === 'succeeded' || state === 'unknown' || state === 'sending' || !validCustomerState(result)) {
+            showCustomerUnknown();
+          } else if (state === 'action_required' || !afterCustomerFailure) {
+            showCustomerActionRequired(clipboardOk);
+          } else {
+            showCustomerFailed(clipboardOk);
+          }
+        }
+
+        function recoverCustomerStatus(afterCustomerFailure) {
+          relayOperation('status', submissionId).then(function(result) {
+            handleFallbackResult(result, afterCustomerFailure);
+          }).catch(function() { showCustomerUnknown(); });
+        }
+
+        function requestOfficialFallback(afterCustomerFailure) {
+          relayOperation('fallback', submissionId).then(function(result) {
+            handleFallbackResult(result, afterCustomerFailure);
+          }).catch(function() { recoverCustomerStatus(afterCustomerFailure); });
+        }
         function sendFailed(err) {
           if (!verified) { showCustomerActionRequired(clipboardOk); return; }
           var code = String(err && (err.code || err.name) || '').toUpperCase();
@@ -959,24 +989,23 @@
             (knownNoSendCode || knownNoSendMessage ? 'definite' : 'unknown');
           relayOperation('customer_failed', submissionId, delivery.claimToken, failure).then(function(result) {
             var state = result && result.customer && result.customer.status;
+            if (isOfficialCustomerSuccess(result)) {
+              showOfficialRelaySuccess(paymentMethod, submissionId);
+              return;
+            }
+            if (state === 'succeeded' && result.customer.source === 'client') {
+              showCustomerSentSuccess(paymentMethod);
+              return;
+            }
             if (!validCustomerState(result) || state === 'unknown' || state === 'sending') { showCustomerUnknown(); return; }
             if (state === 'failed' && failure === 'definite') {
-              relayOperation('fallback', submissionId).then(function(fallback) {
-                if (fallback.customer.status === 'succeeded' && fallback.customer.source === 'official') showOfficialRelaySuccess(paymentMethod);
-                else if (fallback.customer.status === 'unknown' || fallback.customer.status === 'sending') showCustomerUnknown();
-                else if (fallback.customer.status === 'action_required') showCustomerActionRequired(clipboardOk);
-                else showCustomerFailed(clipboardOk);
-              }).catch(function() { showCustomerUnknown(); });
+              requestOfficialFallback(true);
             } else showCustomerActionRequired(clipboardOk);
           }).catch(function() { showCustomerUnknown(); });
         }
         if (typeof liff === 'undefined') {
           if (verified) {
-            relayOperation('fallback', submissionId).then(function(result) {
-              if (result.customer.status === 'succeeded' && result.customer.source === 'official') showOfficialRelaySuccess(paymentMethod);
-              else if (result.customer.status === 'unknown' || result.customer.status === 'sending') showCustomerUnknown();
-              else showCustomerActionRequired(clipboardOk);
-            }).catch(function() { showCustomerUnknown(); });
+            requestOfficialFallback(false);
           } else {
             sendFailed(new Error('LIFF unavailable'));
           }
@@ -986,24 +1015,25 @@
         try { inClient = liff.isInClient() === true; } catch (e) { inClient = false; }
         if (!inClient) {
           if (!verified) { showCustomerActionRequired(clipboardOk); return; }
-          relayOperation('fallback', submissionId).then(function(result) {
-            if (result.customer.status === 'succeeded' && result.customer.source === 'official') showOfficialRelaySuccess(paymentMethod);
-            else if (result.customer.status === 'unknown' || result.customer.status === 'sending') showCustomerUnknown();
-            else showCustomerActionRequired(clipboardOk);
-          }).catch(function() { showCustomerUnknown(); });
+          requestOfficialFallback(false);
           return;
         }
         if (!verified) { sendBatches(messages, function() { showCustomerSentSuccess(paymentMethod); }, sendFailed); return; }
         relayOperation('customer_start', submissionId).then(function(started) {
           var state = started && started.customer && started.customer.status;
-          if (state === 'succeeded') { if (started.customer.source === 'official') showOfficialRelaySuccess(paymentMethod); else showCustomerSentSuccess(paymentMethod); return; }
+          if (state === 'succeeded') {
+            if (isOfficialCustomerSuccess(started)) showOfficialRelaySuccess(paymentMethod, submissionId);
+            else if (started.customer.source === 'client') showCustomerSentSuccess(paymentMethod);
+            else showCustomerUnknown();
+            return;
+          }
           if (state !== 'sending' || !started.claimToken) { if (state === 'unknown' || state === 'sending') showCustomerUnknown(); else if (state === 'failed') showCustomerFailed(clipboardOk); else showCustomerActionRequired(clipboardOk); return; }
           delivery.claimToken = started.claimToken;
           sendBatches(messages, function() {
             relayOperation('customer_sent', submissionId, delivery.claimToken).then(function(sent) {
               var sentState = sent && sent.customer && sent.customer.status;
-              if (sentState === 'succeeded' && sent.customer.source === 'official') showOfficialRelaySuccess(paymentMethod);
-              else if (sentState === 'succeeded') showCustomerSentSuccess(paymentMethod);
+              if (isOfficialCustomerSuccess(sent)) showOfficialRelaySuccess(paymentMethod, submissionId);
+              else if (sentState === 'succeeded' && sent.customer.source === 'client') showCustomerSentSuccess(paymentMethod);
               else showCustomerUnknown();
             }).catch(function() { showCustomerUnknown(); });
           }, sendFailed);
@@ -1025,7 +1055,7 @@
         fireConfetti();
       }
 
-      function showOfficialRelaySuccess(paymentMethod) {
+      function showOfficialRelaySuccess(paymentMethod, submissionId) {
         var actionCard = document.getElementById("customerActionCard");
         actionCard.classList.remove("is-visible");
         actionCard.setAttribute("data-state", "succeeded");
@@ -1039,6 +1069,7 @@
         document.getElementById("newFormButton").style.display = "block";
         document.getElementById("successLinePayArea").style.display = paymentMethod === 'LINE PAY' ? "block" : "none";
         fireConfetti();
+        notifyStore(submissionId);
       }
 
       function showCustomerUnknown() {
@@ -1112,8 +1143,9 @@
         relayOperation('customer_start', currentSubmissionId).then(function(result) {
           var customer = result && result.customer || {};
           if (customer.status === 'succeeded') {
-            if (customer.source === 'official') showOfficialRelaySuccess(document.getElementById("paymentMethod").value);
-            else showCustomerSentSuccess(document.getElementById("paymentMethod").value);
+            if (customer.source === 'official') showOfficialRelaySuccess(document.getElementById("paymentMethod").value, currentSubmissionId);
+            else if (customer.source === 'client') showCustomerSentSuccess(document.getElementById("paymentMethod").value);
+            else showCustomerUnknown();
           } else if (customer.status === 'sending' && result.claimToken && customer.source === 'client') {
             showCustomerUnknown();
             try { window.open(handoffUrl, '_blank', 'noopener'); } catch (e) {}
