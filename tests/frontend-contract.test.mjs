@@ -164,7 +164,7 @@ function submit(env) {
 
 // Exact DOM fixtures for the application's native submit entry point. No submit,
 // save, receipt, delivery, validation, or rendering function is replaced.
-function fillForm(env, malicious = 'Customer') {
+function fillForm(env, malicious = 'Customer', { planMask = 1, address = malicious, pickup = false } = {}) {
   const { nodes, runtime } = env
   const values = {
     cName: malicious, cPhone: '0912345678', cTaxId: malicious, cAddress: malicious,
@@ -193,16 +193,21 @@ function fillForm(env, malicious = 'Customer') {
     card.querySelectorAll = (selector) => { assert.equal(selector, '.product-row'); return [product] }
     runtime.document.querySelectorAll = (selector) => { assert.equal(selector, '.card'); return [card] }
   } else {
-    const plans = [node({ checked: true, value: malicious }), node(), node()]
-    plans[0].setAttribute('data-price', '300')
-    const ship = node({ value: '宅配寄送', checked: true })
-    const pickup = node({ value: '門市取貨' })
+    nodes.cAddress.value = address
+    const plans = [300, 200, 350].map((price, index) => {
+      const plan = node({ checked: Boolean(planMask & (1 << index)), value: malicious })
+      plan.setAttribute('data-price', String(price))
+      return plan
+    })
+    const ship = node({ value: '宅配寄送', checked: !pickup })
+    const pickupRadio = node({ value: '門市取貨', checked: pickup })
     runtime.document.querySelectorAll = (selector) => {
-      assert.equal(selector, 'input[name^="plan"]:checked'); return [plans[0]]
+      assert.equal(selector, 'input[name^="plan"]:checked'); return plans.filter((plan) => plan.checked)
     }
     runtime.document.querySelector = (selector) => {
-      if (selector === 'input[name="deliveryMethod"]:checked' || selector === 'input[value="宅配寄送"]') return ship
-      if (selector === 'input[value="門市取貨"]') return pickup
+      if (selector === 'input[name="deliveryMethod"]:checked') return pickup ? pickupRadio : ship
+      if (selector === 'input[value="宅配寄送"]') return ship
+      if (selector === 'input[value="門市取貨"]') return pickupRadio
       const match = selector.match(/^input\[name="plan([123])"\]$/)
       assert.ok(match, 'fixture selector: ' + selector); return plans[Number(match[1]) - 1]
     }
@@ -498,6 +503,35 @@ test('native submit saves authenticated input, renders escaped summary, and send
   if (formType === 'tasting') assert.match(env.nodes.summaryBox.innerHTML, /A-001/)
   assert.equal(env.effects.length, 1, 'only the clipboard textarea is created under reduced motion')
   assert.equal(env.timers.size, 0)
+})
+
+test('campaign total reaches authenticated save and receipt summary without original freight', async (t) => {
+  for (const [name, options, expected, originalFee] of [
+    ['mainland two plans', { planMask: 3, address: '台中市測試路1號' }, 500, 160],
+    ['island two plans', { planMask: 3, address: '金門縣金城鎮測試路1號' }, 600, 260],
+    ['mainland three plans', { planMask: 7, address: '新北市板橋區金門街1號' }, 850, 160],
+    ['island three plans', { planMask: 7, address: '澎湖縣馬公市測試路1號' }, 950, 260],
+    ['single plan mainland', { planMask: 1, address: '台中市測試路1號' }, 460, null],
+    ['single plan island', { planMask: 1, address: '金門縣金城鎮測試路1號' }, 560, null],
+    ['pickup two plans', { planMask: 3, pickup: true }, 500, null],
+  ]) {
+    await t.test(name, async () => {
+      const env = createRuntime({ fetchImpl: (body) => response(body.payload ? receipt() : relay('unknown')) })
+      fillForm(env, 'Customer', options)
+      submit(env)
+      await flush()
+      const saves = env.fetchCalls.filter((call) => call.body.payload)
+      assert.equal(saves.length, 1)
+      assert.equal(saves[0].body.payload.totalAmount, expected)
+      assert.equal(saves[0].body.payload.deliveryMethod, options.pickup ? '門市取貨' : '宅配寄送')
+      if (originalFee !== null) {
+        assert.match(env.nodes.totalDisplay.innerHTML, new RegExp('運費 \\$' + originalFee))
+        assert.match(env.nodes.totalDisplay.innerHTML, new RegExp('最終金額：\\$' + expected))
+      } else assert.doesNotMatch(env.nodes.totalDisplay.innerHTML, /waived-shipping/)
+      env.fire(360)
+      assert.match(env.nodes.summaryBox.innerHTML, new RegExp('總金額：' + expected))
+    })
+  }
 })
 
 test('stale save and receipt confirmation cannot replace a newer submission', async () => {

@@ -248,11 +248,81 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
 @media(max-width:350px) { .container { padding:20px 14px; } .plan-text { flex-direction:column; align-items:flex-start; gap:2px; } .plan-item { gap:10px; } .item-card,.card { padding:14px; } .split-row { flex-direction:column; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
     </style>
+  <style id="winter-campaign-styles">
+.winter-campaign {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 20px;
+  background: #edf3f5;
+  border-color: #c6d7de;
+}
+.campaign-poster { display: block; min-width: 0; border-radius: 10px; overflow: hidden; }
+.campaign-poster img { width: 100%; height: auto; display: block; }
+.campaign-copy { min-width: 0; }
+.campaign-eyebrow { margin: 0 0 10px; color: #496674; font-size: 12px; letter-spacing: 1.5px; font-weight: 700; }
+.campaign-copy h2 { margin: 0 0 14px; text-align: left; color: #76503c; font: 500 30px/1.5 'PMingLiU', 'Noto Serif TC', serif; letter-spacing: 2px; }
+.campaign-period { display: inline-block; margin: 0 0 18px; padding: 5px 12px; border: 1px solid #9ab6c4; border-radius: 30px; color: #385968; font-size: 13px; font-weight: 600; }
+.campaign-offer { margin: 0 0 14px; color: #493a30; font-size: 17px; line-height: 1.7; }
+.campaign-offer strong { display: block; color: #76503c; font-size: 28px; letter-spacing: 1px; }
+.campaign-description { margin: 0 0 16px; color: #52636a; font-size: 13px; line-height: 1.8; }
+.campaign-link { display: inline-flex; align-items: center; min-height: 44px; color: #76503c; font-size: 14px; text-underline-offset: 5px; }
+.campaign-reminder { margin: -4px 0 18px; padding: 10px 14px; border-left: 3px solid #8daebd; background: #edf3f5; border-radius: 0 8px 8px 0; color: #385968; font-size: 13px; }
+.scheme-guide { margin: 0 0 24px; overflow: hidden; border: 1px solid var(--rule); border-radius: 18px; background: var(--paper); }
+.scheme-guide-header { padding: 22px 24px 18px; }
+.scheme-guide-header h2 { margin: 0 0 8px; text-align: left; color: var(--text); font-size: 20px; }
+.scheme-guide-header p { margin: 0; color: var(--text-muted); font-size: 13px; line-height: 1.8; }
+.scheme-guide-image { display: block; }
+.scheme-guide-image img { display: block; width: 100%; height: auto; }
+.original-price { color: #62503f; font-size: 14px; font-weight: 400; line-height: 1.8; }
+.waived-shipping { position: relative; display: inline-block; margin: 0 4px; white-space: nowrap; text-decoration: none; }
+.waived-shipping::after { content: ""; position: absolute; left: -3px; right: -3px; top: 50%; height: 2px; background: #c13b30; transform: rotate(12deg); pointer-events: none; }
+.campaign-price-note { margin: 5px 0 8px; color: #49623f; font-size: 13px; font-weight: 500; line-height: 1.7; }
+.final-amount { font-size: 24px; font-weight: 700; line-height: 1.6; }
+@media (min-width: 701px) and (max-width: 960px) {
+  .winter-campaign { gap: 18px; padding: 16px; }
+  .campaign-copy h2 { font-size: 25px; }
+  .campaign-offer { font-size: 15px; }
+  .campaign-offer strong { font-size: 25px; }
+}
+@media (max-width: 700px) {
+  .winter-campaign { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 20px; }
+  .campaign-poster { width: 100%; max-width: 280px; margin: 0 auto; }
+  .campaign-copy { text-align: center; }
+  .campaign-copy h2 { text-align: center; font-size: 28px; margin-bottom: 10px; }
+  .campaign-period { margin-bottom: 12px; }
+  .campaign-offer { margin-bottom: 8px; }
+  .campaign-description { margin-bottom: 8px; }
+}
+</style>
   </head>
   <body>
 <div class="quality-shell"><aside class="quality-aside" aria-label="表單導覽"><div class="quality-brand">Likea<span>Dream</span></div><div class="quality-kicker">TASTING APPLICATION</div><svg class="quality-art" viewBox="0 0 220 132" aria-hidden="true" fill="none"><path d="M30 109h160M45 99h130V67L109 45 45 67v32Z" stroke="currentColor" stroke-width="1.5"/><path d="m45 67 64 21 66-21M109 88v11M58 57v-9l52-18 52 18v9M78 41l15 5m31-6 14 5M78 60v16m62-17v15" stroke="currentColor" stroke-width="1.5"/><path d="M22 36h9m-4.5-4.5v9M179 28h11m-5.5-5.5v11" stroke="currentColor"/><circle cx="195" cy="69" r="3" stroke="currentColor"/></svg><h2>美好，<br>從一口開始。</h2><p>選擇想品嚐的方案，為值得慶祝的時刻挑一份甜。</p><nav class="quality-nav" aria-label="表單段落"><a href="#plansSection"><span aria-hidden="true">01</span>選擇試吃方案</a><a href="#contactSection"><span aria-hidden="true">02</span>聯絡人資料</a><a href="#deliverySection"><span aria-hidden="true">03</span>配送與日期</a><a href="#paymentSection"><span aria-hidden="true">04</span>付款與確認</a></nav><p class="quality-aside-note">填寫完成後，請確認資料並依畫面指示回傳 LINE。</p></aside><main class="quality-content">
-    <div class="banner-container" id="mainBanner">
-      <img src="https://i.ibb.co/4wxW7WNp/9.png" class="banner-img" alt="試吃方案說明">
+    <div id="mainBanner">
+    <section class="banner-container winter-campaign" aria-labelledby="campaignTitle">
+      <a class="campaign-poster" href="assets/winter-lullaby.jpg" target="_blank" rel="noopener" aria-label="放大查看冬季搖籃曲活動圖片">
+        <img src="assets/winter-lullaby.jpg" width="1265" height="1778" alt="冬季搖籃曲：10/01–12/31，彌月品鑑任選 2 款禮盒即享宅配免運。展示 Dreamy 旋轉筒、奶油曲奇插畫鐵盒與蜂蜜蛋糕立體插畫故事盒。" fetchpriority="high">
+      </a>
+      <div class="campaign-copy">
+        <p class="campaign-eyebrow">彌月品鑑・期間限定</p>
+        <h2 id="campaignTitle">冬季搖籃曲</h2>
+        <p class="campaign-period">10.01 — 12.31</p>
+        <p class="campaign-offer">任選 <b>2</b> 款禮盒<br>即享<strong>宅配免運</strong></p>
+        <p class="campaign-description">蜂蜜蛋糕、奶油曲奇與 Dreamy 旋轉筒，<br>為寶貝挑一份甜蜜的彌月心意。</p>
+        <p class="campaign-description">本活動僅限本島免運，<br>離島配送需酌收100元差額。</p>
+        <a class="campaign-link" href="#plansSection">選擇試吃方案 ↓</a>
+      </div>
+    </section>
+    <section class="scheme-guide" aria-labelledby="schemeGuideTitle">
+      <header class="scheme-guide-header">
+        <h2 id="schemeGuideTitle">試吃方案介紹</h2>
+        <p>下圖為各方案內容與單款試吃價格。<br>10/01–12/31 任選 2 款禮盒，本島宅配免運，離島配送酌收 100 元差額。</p>
+      </header>
+      <a class="scheme-guide-image" href="assets/tasting-guide.jpg" target="_blank" rel="noopener" aria-label="放大查看完整試吃方案介紹">
+        <img src="assets/tasting-guide.jpg" width="1722" height="2435" alt="專屬甜蜜試吃方案：方案一蜂蜜蛋糕 300 元，方案二曲奇餅乾 200 元，方案三 Dreamy 旋轉筒 350 元。圖片列出各款禮盒的口味、內容數量、單款本島運費與試吃申請說明。" loading="lazy">
+      </a>
+    </section>
     </div>
     <div class="container" id="formView" style="display:block;">
       <div id="liffStatus" style="font-size:12px; color:#ccc; text-align:center; margin-bottom:5px;">Loading...</div>
@@ -262,7 +332,7 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
         <input type="hidden" id="lineNameField" name="lineName">
 
         <div class="enter" style="--i:1;">
-        <h2 class="quality-section-title" id="plansSection"><span aria-hidden="true">01</span>選擇試吃方案</h2><p class="quality-help">可複選，請勾選想品嚐的方案。</p>
+        <h2 class="quality-section-title" id="plansSection"><span aria-hidden="true">01</span>選擇試吃方案</h2><p class="quality-help">可複選，請勾選想品嚐的方案。</p><p class="campaign-reminder">10/01–12/31 期間內申請，任選 2 款禮盒：本島宅配免運，離島配送酌收 100 元差額。</p>
         <div class="plan-group">
           <label class="plan-item"><input type="checkbox" name="plan1" value="方案一：蜂蜜蛋糕" data-price="300" onchange="calcTotal()"><span class="plan-text"><span>方案一：蜂蜜蛋糕</span> <span class="price-tag">$300</span></span></label>
           <label class="plan-item"><input type="checkbox" name="plan2" value="方案二：曲奇餅乾" data-price="200" onchange="calcTotal()"><span class="plan-text"><span>方案二：曲奇餅乾</span> <span class="price-tag">$200</span></span></label>
@@ -329,7 +399,7 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
         </div>
 
         <h2 class="quality-section-title" id="paymentSection"><span aria-hidden="true">04</span>付款與確認</h2><div class="payment-box enter" style="--i:8;">
-          <div class="total-price" id="totalDisplay">總金額：$0</div>
+          <div class="total-price" id="totalDisplay" aria-live="polite" aria-atomic="true">總金額：$0</div>
           <label style="margin-top:0;" for="paymentMethod">付款方式</label>
           <select id="paymentMethod" onchange="togglePayment()">
             <option value="匯款轉帳" selected>匯款轉帳</option>
@@ -945,6 +1015,24 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
       }
 
       // ===== 計算總金額 =====
+      // 活動期間依台灣時間的填表日期判定，2026/10/01–12/31（含首尾日）。
+      function calculateTastingShipping(planCount, isPickup, isIsland, now) {
+        if (planCount === 0) return { shippingFee: 0, shippingType: "", campaignApplied: false };
+        if (isPickup) return { shippingFee: 0, shippingType: "(門市自取免運)", campaignApplied: false };
+        var timestamp = now.getTime();
+        var campaignActive = timestamp >= Date.parse('2026-10-01T00:00:00+08:00') && timestamp < Date.parse('2027-01-01T00:00:00+08:00');
+        if (planCount >= 2 && campaignActive) {
+          return {
+            shippingFee: isIsland ? 100 : 0,
+            shippingType: isIsland ? "(冬季搖籃曲・離島配送差額)" : "(冬季搖籃曲・本島宅配免運)",
+            campaignApplied: true
+          };
+        }
+        return { shippingFee: isIsland ? 260 : 160, shippingType: isIsland ? "(離島運費)" : "(本島運費)", campaignApplied: false };
+      }
+
+      var islandCampaignNoticeShown = false;
+
       function calcTotal() {
         var productTotal = 0;
         var hasSelected = false;
@@ -954,29 +1042,39 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
           hasSelected = true;
         });
 
-        var shippingFee = 0;
-        var shippingType = "";
         var isPickup = document.querySelector('input[name="deliveryMethod"]:checked').value === "門市取貨";
-
-        if (hasSelected) {
-          if (isPickup) {
-            shippingFee = 0;
-            shippingType = "(門市自取免運)";
-          } else {
-            var addr = document.getElementById("cAddress").value;
-            // 離島判定需含行政區後綴（縣/鄉），避免「新北市板橋區金門街」「馬祖新村」等路名/地名誤判
-            var islands = ["澎湖縣", "金門縣", "連江縣", "綠島鄉", "蘭嶼鄉", "琉球鄉", "小琉球"];
-            var isIsland = islands.some(function(keyword) { return addr.includes(keyword); });
-            if (isIsland) { shippingFee = 260; shippingType = "(離島運費)"; }
-            else { shippingFee = 160; shippingType = "(本島運費)"; }
-          }
+        var addr = document.getElementById("cAddress").value;
+        // 沿用行政區判定，避免「板橋區金門街」「馬祖新村」等路名誤判。
+        var islands = ["澎湖縣", "金門縣", "連江縣", "綠島鄉", "蘭嶼鄉", "琉球鄉", "小琉球"];
+        var isIsland = islands.some(function(keyword) { return addr.includes(keyword); });
+        var shipping = calculateTastingShipping(checks.length, isPickup, isIsland, new Date());
+        var shippingFee = shipping.shippingFee;
+        var shippingType = shipping.shippingType;
+        var needsIslandNotice = shipping.campaignApplied && isIsland;
+        if (needsIslandNotice && !islandCampaignNoticeShown) {
+          islandCampaignNoticeShown = true;
+          alert("本活動僅限本島免運，離島配送需酌收100元差額");
+        } else if (!needsIslandNotice) {
+          islandCampaignNoticeShown = false;
         }
 
         var finalTotal = productTotal + shippingFee;
         var displayDiv = document.getElementById('totalDisplay');
         var prevText = displayDiv.innerText;
         if (hasSelected) {
-          displayDiv.innerHTML = '<span class="price-detail">商品 ' + escapeHtml(productTotal) + ' + 運費 ' + escapeHtml(shippingFee) + '</span><br>總金額：' + escapeHtml(finalTotal);
+          if (shipping.campaignApplied) {
+            // 原運費僅供畫面對照，最終金額與送出資料仍使用實際 shippingFee。
+            var originalShippingFee = isIsland ? 260 : 160;
+            var campaignPriceNote = isIsland
+              ? '離島配送差額：$' + shippingFee + '（原運費改以差額計收）'
+              : '活動優惠：本島運費已全額折抵';
+            displayDiv.innerHTML =
+              '<div class="original-price">原始金額：商品 $' + productTotal + ' + <s class="waived-shipping">運費 $' + originalShippingFee + '</s></div>' +
+              '<div class="campaign-price-note">' + campaignPriceNote + '</div>' +
+              '<div class="final-amount">最終金額：$' + finalTotal + '</div>';
+          } else {
+            displayDiv.innerHTML = '<span class="price-detail">商品 ' + productTotal + ' + 運費 ' + shippingFee + '<br>' + shippingType + '</span><br>總金額：' + finalTotal;
+          }
         } else {
           displayDiv.innerHTML = '總金額：$0';
         }
@@ -985,7 +1083,7 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
           void displayDiv.offsetWidth; // 重觸發動畫
           displayDiv.classList.add('bump');
         }
-        return { productTotal: productTotal, shippingFee: shippingFee, shippingType: shippingType, finalTotal: finalTotal, isPickup: isPickup };
+        return { productTotal: productTotal, shippingFee: shippingFee, shippingType: shippingType, finalTotal: finalTotal, isPickup: isPickup, campaignApplied: shipping.campaignApplied };
       }
 
       function prefersReducedMotion() {
