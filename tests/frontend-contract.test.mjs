@@ -283,7 +283,7 @@ test('receipt validation binds the UUID, form, text array, and optional applicat
   const env = createRuntime()
   const body = receipt()
   const saved = env.runtime.savedSubmissionResult(body, 'submission-test', true)
-  assert.deepEqual(plain(saved), { verified: true, submissionId: 'submission-test', customerTexts: ['server receipt'], applicationNo: 'A-001' })
+  assert.deepEqual(plain(saved), { verified: true, submissionId: 'submission-test', customerTexts: ['server receipt'], applicationNo: 'A-001', calendarSync: 'needs_attention' })
   body.customerTexts.push('later mutation')
   assert.deepEqual(plain(saved.customerTexts), ['server receipt'])
   const legacyDirect = receipt(undefined, { formType: undefined, applicationNo: null })
@@ -897,4 +897,33 @@ test('reduced motion avoids particles, confetti, and their timers; escaping pres
   assert.equal(env.effects.length, 0)
   assert.equal(env.timers.size, 0)
   assert.match(html, /@media\s*\(prefers-reduced-motion:\s*reduce\)/)
+})
+
+test('completed form exposes a private receipt for the matching submission and keeps its ID on retry', async () => {
+  const { runtime, nodes } = createRuntime()
+  runtime.TextEncoder = TextEncoder
+  let digestReady
+  runtime.window.crypto = {
+    getRandomValues: bytes => globalThis.crypto.getRandomValues(bytes),
+    subtle: { digest(...args) {
+      digestReady = globalThis.crypto.subtle.digest(...args)
+      return digestReady
+    } },
+  }
+  runtime.prepareCalendarReceipt()
+  await digestReady
+  const id = runtime.stableSubmissionId()
+  assert.equal(runtime.stableSubmissionId(), id)
+  runtime.showCalendarReceipt(id)
+  const link = nodes.calendarReviewReceipt
+  assert.equal(link.hidden, false)
+  const url = new URL(link.href)
+  assert.equal(url.origin + url.pathname, 'https://packaging-calendar.vercel.app/application-receipt')
+  const params = new URLSearchParams(url.hash.slice(1))
+  assert.equal(params.get('source'), formType)
+  const claim = params.get('claim')
+  assert.match(claim, /^[0-9a-f]{64}$/)
+  assert.equal(id, 'cr1_' + createHash('sha256').update(claim).digest('hex'))
+  runtime.showCalendarReceipt('different-submission')
+  assert.equal(link.hidden, true)
 })
