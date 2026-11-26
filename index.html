@@ -437,6 +437,7 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
         <i id="successIcon" class="bi bi-hourglass-split success-icon"></i>
         <div id="successTitle" class="success-title enter" style="--i:1;">資料已儲存</div>
         <p id="successDesc" class="success-desc enter" style="--i:2;">資料已儲存，正在回傳 LINE 訊息…</p>
+        <p><a id="calendarReviewReceipt" hidden target="_blank" rel="noopener noreferrer">開啟本次送件收據，核對或補充資料</a></p>
         <p id="calendarSyncNotice" role="status" hidden>表單已收到，但客服系統同步狀態尚待確認。請回 LINE 聯絡客服，請勿重複填寫。</p>
 
         <div style="margin-top: 15px; margin-bottom: 25px;">
@@ -548,9 +549,35 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
         return 'submission-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
       }
 
+      var calendarReceiptPair = null;
+      var nextCalendarReceipt = null;
+      function prepareCalendarReceipt() {
+        if (!window.crypto || !window.crypto.subtle) return;
+        var bytes = window.crypto.getRandomValues(new Uint8Array(32));
+        function hex(values) {
+          return Array.from(values, function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+        }
+        var secret = hex(bytes);
+        window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret)).then(function(digest) {
+          nextCalendarReceipt = { id: 'cr1_' + hex(new Uint8Array(digest)), secret: secret };
+        }).catch(function() {});
+      }
+      prepareCalendarReceipt();
       function stableSubmissionId() {
-        if (!currentSubmissionId) currentSubmissionId = createSubmissionId();
+        if (!currentSubmissionId) {
+          calendarReceiptPair = nextCalendarReceipt;
+          nextCalendarReceipt = null;
+          currentSubmissionId = calendarReceiptPair ? calendarReceiptPair.id : createSubmissionId();
+          prepareCalendarReceipt();
+        }
         return currentSubmissionId;
+      }
+
+      function showCalendarReceipt(id) {
+        var link = document.getElementById('calendarReviewReceipt');
+        link.hidden = !calendarReceiptPair || calendarReceiptPair.id !== id;
+        if (link.hidden) { link.removeAttribute('href'); return; }
+        link.href = 'https://packaging-calendar.vercel.app/application-receipt#source=' + FORM_ID + '&claim=' + calendarReceiptPair.secret;
       }
 
       function accessToken() {
@@ -1220,6 +1247,7 @@ hr { background:var(--rule) !important; margin:28px 0 !important; }
         saveSubmission(token, submissionId, data).then(function(saved) {
           if (submissionId !== currentSubmissionId) return;
           savedWithVerifiedIdentity = true;
+          showCalendarReceipt(submissionId);
           document.getElementById("calendarSyncNotice").hidden = saved.calendarSync === "delivered";
           var finalText = saved.customerTexts.join("\n\n");
           document.getElementById("copyArea").value = finalText;
